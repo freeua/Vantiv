@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Vantiv Gateway for WooCommerce
+ * Plugin Name: Gateway for Vantiv on WooCommerce
  * Plugin URI: https://github.com/freeua/gateway-vantiv-woocommerce
  * Description: Take payments on your store using Vantiv.
  * Version: 1.0.0
@@ -19,7 +19,7 @@ define( 'WC_VANTIV_MAIN_FILE', __FILE__ );
 
 function woocommerce_vantiv_missing_wc_notice() {
 	/* translators: 1. URL link. */
-	echo '<div class="error"><p><strong>' . sprintf( esc_html__( 'Vantiv requires WooCommerce to be installed and active. You can download %s here.', 'woocommerce-gateway-vantiv' ), '<a href="https://woocommerce.com/" target="_blank">WooCommerce</a>' ) . '</strong></p></div>';
+	echo '<div class="error"><p><strong>' . sprintf( esc_html__( 'Vantiv requires WooCommerce to be installed and active. You can download %s here.', 'gateway-vantiv-woocommerce' ), '<a href="https://woocommerce.com/" target="_blank">WooCommerce</a>' ) . '</strong></p></div>';
 }
 
 
@@ -143,7 +143,7 @@ function woocommerce_gateway_vantiv_init() {
 			 */
 			public function plugin_action_links( $links ) {
 				$plugin_links = array(
-					'<a href="admin.php?page=wc-settings&tab=checkout&section=vantiv">' . esc_html__( 'Settings', 'woocommerce-gateway-vantiv' ) . '</a>',
+					'<a href="admin.php?page=wc-settings&tab=checkout&section=vantiv">' . esc_html__( 'Settings', 'gateway-vantiv-woocommerce' ) . '</a>',
 				);
 				return array_merge( $plugin_links, $links );
 			}
