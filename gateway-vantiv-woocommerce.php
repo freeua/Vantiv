@@ -17,15 +17,15 @@ define( 'WC_VANTIV_MAIN_FILE', __FILE__ );
 
 
 
-function woocommerce_vantiv_missing_wc_notice() {
+function woocommerce_vantiv_missing_wc_notice () {
 	/* translators: 1. URL link. */
-	echo '<div class="error"><p><strong>' . sprintf( esc_html__( 'Vantiv requires WooCommerce to be installed and active. You can download %s here.', 'gateway-vantiv-woocommerce' ), '<a href="https://woocommerce.com/" target="_blank">WooCommerce</a>' ) . '</strong></p></div>';
+	echo '<div class="error"><p><strong>' . sprintf( esc_html__( 'Vantiv requires WooCommerce to be installed and active. You can download %s here.', 'gateway-vantiv-woocommerce' ), '<a href="https://woocommerce.com/" target="_blank">' . esc_html__( 'WooCommerce', 'gateway-vantiv-woocommerce' ) . '</a>' ) . '</strong></p></div>';
 }
 
 
 add_action( 'plugins_loaded', 'woocommerce_gateway_vantiv_init' );
 
-function woocommerce_gateway_vantiv_init() {
+function woocommerce_gateway_vantiv_init () {
 	
 
 	if ( ! class_exists( 'WooCommerce' ) ) {
@@ -48,7 +48,7 @@ function woocommerce_gateway_vantiv_init() {
 			 *
 			 * @return Singleton The *Singleton* instance.
 			 */
-			public static function get_instance() {
+			public static function get_instance () {
 				if ( null === self::$instance ) {
 					self::$instance = new self();
 				}
@@ -61,7 +61,7 @@ function woocommerce_gateway_vantiv_init() {
 			 *
 			 * @return void
 			 */
-			private function __clone() {}
+			private function __clone () {}
 
 			/**
 			 * Private unserialize method to prevent unserializing of the *Singleton*
@@ -69,13 +69,13 @@ function woocommerce_gateway_vantiv_init() {
 			 *
 			 * @return void
 			 */
-			private function __wakeup() {}
+			private function __wakeup () {}
 
 			/**
 			 * Protected constructor to prevent creating a new instance of the
 			 * *Singleton* via the `new` operator from outside of this class.
 			 */
-			private function __construct() {
+			private function __construct () {
 				add_action( 'admin_init', array( $this, 'install' ) );
 				$this->init();
 			}
@@ -86,17 +86,13 @@ function woocommerce_gateway_vantiv_init() {
 			 * @since 1.0.0
 			 * @version 4.0.0
 			 */
-			public function init() {
+			public function init () {
 
 				require_once dirname( __FILE__ ) . '/includes/woocommerce-gatway.php';
-
-
-
+				
 				add_filter( 'woocommerce_payment_gateways', array( $this, 'add_gateways' ) );
 				add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'plugin_action_links' ) );
-
-
-
+				
 				if ( version_compare( WC_VERSION, '3.4', '<' ) ) {
 					add_filter( 'woocommerce_get_sections_checkout', array( $this, 'filter_gateway_order_admin' ) );
 				}
@@ -108,7 +104,7 @@ function woocommerce_gateway_vantiv_init() {
 			 * @since 3.1.0
 			 * @version 4.0.0
 			 */
-			public function update_plugin_version() {
+			public function update_plugin_version () {
 				delete_option( 'wc_vantiv_version' );
 				update_option( 'wc_vantiv_version', WC_VANTIV_VERSION );
 			}
@@ -119,7 +115,7 @@ function woocommerce_gateway_vantiv_init() {
 			 * @since 3.1.0
 			 * @version 3.1.0
 			 */
-			public function install() {
+			public function install () {
 				if ( ! is_plugin_active( plugin_basename( __FILE__ ) ) ) {
 					return;
 				}
@@ -141,7 +137,7 @@ function woocommerce_gateway_vantiv_init() {
 			 * @since 1.0.0
 			 * @version 4.0.0
 			 */
-			public function plugin_action_links( $links ) {
+			public function plugin_action_links ( $links ) {
 				$plugin_links = array(
 					'<a href="admin.php?page=wc-settings&tab=checkout&section=vantiv">' . esc_html__( 'Settings', 'gateway-vantiv-woocommerce' ) . '</a>',
 				);
@@ -154,36 +150,31 @@ function woocommerce_gateway_vantiv_init() {
 			 * @since 1.0.0
 			 * @version 4.0.0
 			 */
-			public function add_gateways( $methods ) {
-				$methods[] = 'WC_vantiv_Pay';
+			public function add_gateways ( $methods ) {
+				$methods[] = esc_html__( 'WC_vantiv_Pay', 'gateway-vantiv-woocommerce' );
     			return $methods;
 			}
-
-
+			
 			/**
 			 * Modifies the order of the gateways displayed in admin.
 			 *
 			 * @since 4.0.0
 			 * @version 4.0.0
 			 */
-			public function filter_gateway_order_admin( $sections ) {
+			public function filter_gateway_order_admin ( $sections ) {
 				unset( $sections['vantiv'] );
-				$sections['vantiv']   = 'Vantiv';
+				$sections['vantiv']   = esc_html__( 'Vantiv', 'gateway-vantiv-woocommerce' );
 				return $sections;
 			}
-
-
 		}
 
 		WC_Vantiv::get_instance();
 	endif;
 }
 
+add_action( 'wp_enqueue_scripts','vantiv_scripts', 11 );
 
-add_action('wp_enqueue_scripts','vantiv_scripts');
-
-function vantiv_scripts() {
-//    wp_enqueue_script( 'jquery-plugin-vantiv', plugins_url( '/assets/js/jquery-1.9.0.min.js', __FILE__ ));
-    wp_enqueue_script( 'input-mask-script', plugins_url( '/assets/js/jquery.inputmask.min.js', __FILE__ ));
-    wp_enqueue_script( 'vantiv-scripts', plugins_url( '/assets/js/vantiv.js', __FILE__ ));
+function vantiv_scripts () {
+    wp_enqueue_script( 'input-mask-script', plugins_url( '/assets/js/jquery.inputmask.min.js', __FILE__ ) );
+    wp_enqueue_script( 'vantiv-scripts', plugins_url( '/assets/js/vantiv.js', __FILE__ ) );
 }
