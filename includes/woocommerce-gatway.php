@@ -439,17 +439,17 @@ if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
         function check_vantiv_response () {
             global $woocommerce;
             if ( isset( $_REQUEST['txnid'] ) && isset( $_REQUEST['mihpayid'] ) ) {
-                $order_id_time = ( isset( $_REQUEST['txnid'] ) ) ? esc_html( sanitize_text_field( $_REQUEST['txnid'] ) ) : '';
+                $order_id_time = ( isset( $_REQUEST['txnid'] ) ) ?  sanitize_text_field( $_REQUEST['txnid'] )  : '';
                 $order_id = explode( '_', $order_id_time );
                 $order_id = (int) $order_id[0];
                 if ( $order_id != '' ) {
                     try {
                         $order = new WC_Order( $order_id );
-                        $merchant_id = ( isset( $_REQUEST['key'] ) ) ? esc_html( sanitize_text_field( $_REQUEST['key'] ) ) : '';
-                        $amount = ( isset( $_REQUEST['Amount'] ) ) ? esc_html( sanitize_text_field( $_REQUEST['Amount'] ) ) : '';
-                        $hash = ( isset( $_REQUEST['hash'] ) ) ? esc_html( sanitize_text_field( $_REQUEST['hash'] ) ) : '';
+                        $merchant_id = ( isset( $_REQUEST['key'] ) ) ?  sanitize_text_field( $_REQUEST['key'] )  : '';
+                        $amount = ( isset( $_REQUEST['Amount'] ) ) ?  sanitize_text_field( $_REQUEST['Amount'] )  : '';
+                        $hash = ( isset( $_REQUEST['hash'] ) ) ?  sanitize_text_field( $_REQUEST['hash'] )  : '';
 
-                        $status = ( isset( $_REQUEST['status'] ) ) ? esc_html( sanitize_text_field( $_REQUEST['status'] ) ) : '';
+                        $status = ( isset( $_REQUEST['status'] ) ) ?  sanitize_text_field( $_REQUEST['status'] )  : '';
                         $productinfo = "Order $order_id";
                         echo $hash;
                         echo "{$this->salt}|$status|||||||||||{$order->billing_email}|{$order->billing_first_name}|$productinfo|{$order->order_total}|$order_id_time|{$this->merchant_id}";
@@ -467,21 +467,21 @@ if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
 
                                     } else {
                                         $order->payment_complete();
-                                        $order->add_order_note( 'Vantiv payment successful<br/>Unnique Id from Vantiv: ' . $_REQUEST['mihpayid'] );
+                                        $order->add_order_note( 'Vantiv payment successful<br/>Unnique Id from Vantiv: ' . esc_html($_REQUEST['mihpayid'] ) );
                                         $order->add_order_note( $this->msg['message'] );
                                         $woocommerce->cart->empty_cart();
                                     }
                                 } else if ( $status == "pending" ) {
                                     $this->msg['message'] = "Thank you for shopping with us. Right now your payment staus is pending, We will keep you posted regarding the status of your order through e-mail";
                                     $this->msg['class'] = 'woocommerce_message woocommerce_message_info';
-                                    $order->add_order_note( 'Vantiv payment status is pending<br/>Unnique Id from Vantiv: ' . $_REQUEST['mihpayid'] );
+                                    $order->add_order_note( 'Vantiv payment status is pending<br/>Unnique Id from Vantiv: ' . esc_html($_REQUEST['mihpayid'] ) );
                                     $order->add_order_note( $this->msg['message'] );
                                     $order->update_status( 'on-hold' );
                                     $woocommerce->cart->empty_cart();
                                 } else {
                                     $this->msg['class'] = 'woocommerce_error';
                                     $this->msg['message'] = "Thank you for shopping with us. However, the transaction has been declined.";
-                                    $order->add_order_note( 'Transaction Declined: ' . $_REQUEST['Error'] );
+                                    $order->add_order_note( 'Transaction Declined: ' . esc_html($_REQUEST['Error'] ) );
 
                                     //Here you need to put in the routines for a failed
                                     //transaction such as sending an email to customer
