@@ -367,9 +367,9 @@ if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
                     'country'      => $order->billing_country,
                 ),
                 'card'          => array(
-                    'number'            => str_replace( array( ' ', '' ), '', esc_html( sanitize_text_field( $_POST['ccnumber'] ) ) ),
-                    'expDate'           => str_replace( array( '/', ' '), '', esc_html( sanitize_text_field( $_POST['exp-date'] ) ) ),
-                    'cardValidationNum' => ( isset( $_POST['cvc'] ) ) ? esc_html( sanitize_text_field( $_POST['cvc'] ) ) : '',
+                    'number'            => str_replace( array( ' ', '' ), '',  sanitize_text_field( $_POST['ccnumber'] ) ),
+                    'expDate'           => str_replace( array( '/', ' '), '',  sanitize_text_field( $_POST['exp-date'] ) ),
+                    'cardValidationNum' => ( isset( $_POST['cvc'] ) ) ?  sanitize_text_field( $_POST['cvc'] ) : '',
                     'type'              => 'MC',
                 )
             );
@@ -402,9 +402,9 @@ if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
         }
 
         public function validate_fields () {
-            $card_number = str_replace( array( ' ', '' ), '', esc_html( sanitize_text_field( $_POST['ccnumber'] ) ) );
-            $card_exp_date = str_replace( array( '/', ' ' ), '', esc_html( sanitize_text_field( $_POST['exp-date'] ) ) );
-            $card_cvc = ( isset( $_POST['cvc'] ) ) ? esc_html( sanitize_text_field( $_POST['cvc'] ) ) : '';
+            $card_number = str_replace( array( ' ', '' ), '',  sanitize_text_field( $_POST['ccnumber'] ) );
+            $card_exp_date = str_replace( array( '/', ' ' ), '',  sanitize_text_field( $_POST['exp-date'] ) );
+            $card_cvc = ( isset( $_POST['cvc'] ) ) ?  sanitize_text_field( $_POST['cvc'] )  : '';
             if ( empty( $card_number ) ) {
                 wc_add_notice( 'Card Number is required!', 'error' );
                 return false;
