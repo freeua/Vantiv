@@ -4,205 +4,289 @@ require_once __DIR__ . '/../vantiv_sdk/vendor/autoload.php';
 use cnp\sdk\CnpOnlineRequest;
 use cnp\sdk\XmlParser;
 
+if ( ! defined('ABSPATH') ) {
+    exit;
+}
 
-if ( ! defined( 'ABSPATH' ) ) {
-		exit;
-	}
-
-if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
-    class WC_vantiv_Pay extends WC_Payment_Gateway {
-        public function __construct () {
+if ( ! class_exists('WC_Gateway_Vantiv') ) {
+    class WC_Gateway_Vantiv extends WC_Payment_Gateway
+    {
+        public function __construct ()
+        {
             $this->id                 = 'vantiv';
             $this->medthod_title      = 'Vantiv';
             $this->has_fields         = false;
             $this->init_form_fields();
             $this->init_settings();
             $this->title              = $this->settings['title'];
-            $this->testmode           = 'yes' === $this->get_option( 'sandbox' );
-            $this->description        = $this->get_option( 'description' );
+            $this->testmode           = 'yes' === $this->get_option('sandbox');
+            $this->description        = $this->get_option('description');
             $this->method_description = 'Vantiv works by adding payment fields on the checkout and then sending the details to Vantiv.';
-            $this->liveurl            = 'https://secure.vantiv.in/_payment';
+            $this->liveurl            = 'https://certtransaction.hostedpayments.com/';
             $this->msg['message']     = "";
             $this->msg['class']       = "";
+			$this->order_button_text = __('Proceed to Vantiv', 'woocommerce');
 
-            add_action( 'init', array( &$this, 'check_vantiv_response' ) );
-            if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) ) {
-                add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'save_payment_gateway_settings' ) );
+            add_action('init', array( &$this, 'check_vantiv_response' ));
+            if ( version_compare(WOOCOMMERCE_VERSION, '2.0.0', '>=') ) {
+                add_action('woocommerce_update_options_payment_gateways_' . $this->id, array( &$this, 'save_payment_gateway_settings' ));
             } else {
-                add_action( 'woocommerce_update_options_payment_gateways', array( &$this, 'save_payment_gateway_settings' ) );
+                add_action('woocommerce_update_options_payment_gateways', array( &$this, 'save_payment_gateway_settings' ));
             }
-            add_action( 'woocommerce_receipt_vantiv', array( &$this, 'receipt_page' ) );
+            add_action('woocommerce_receipt_vantiv', array( &$this, 'receipt_page' ));
         }
 
-        function init_form_fields () {
+        function init_form_fields ()
+        {
             $this->form_fields = array(
                 'enabled'     => array(
-                    'title'       => __( 'Enable/Disable', 'gateway-vantiv-woocommerce' ),
+                    'title'       => __('Enable/Disable', 'gateway-vantiv-woocommerce'),
                     'type'        => 'checkbox',
-                    'label'       => __( 'Enable Vantiv Payment Module.', 'gateway-vantiv-woocommerce' ),
+                    'label'       => __('Enable Vantiv Payment Module.', 'gateway-vantiv-woocommerce'),
                     'default'     => 'no'
                 ),
                 'title'       => array(
-                    'title'       => __( 'Title:', 'gateway-vantiv-woocommerce' ),
+                    'title'       => __('Title:', 'gateway-vantiv-woocommerce'),
                     'type'        => 'text',
-                    'description' => __( 'This controls the title which the user sees during checkout.', 'gateway-vantiv-woocommerce' ),
-                    'default'     => __( 'Vantiv', 'gateway-vantiv-woocommerce' )
+                    'description' => __('This controls the title which the user sees during checkout.', 'gateway-vantiv-woocommerce'),
+                    'default'     => __('Vantiv', 'gateway-vantiv-woocommerce')
                 ),
                 'description' => array(
-                    'title'       => __( 'Description:', 'gateway-vantiv-woocommerce' ),
+                    'title'       => __('Description:', 'gateway-vantiv-woocommerce'),
                     'type'        => 'textarea',
-                    'description' => __( 'This controls the description which the user sees during checkout.', 'gateway-vantiv-woocommerce' ),
-                    'default'     => __( 'Pay securely by Credit or Debit card or internet banking through Vantiv Secure Servers.', 'gateway-vantiv-woocommerce' )
+                    'description' => __('This controls the description which the user sees during checkout.', 'gateway-vantiv-woocommerce'),
+                    'default'     => __('Pay securely by Credit or Debit card or internet banking through Vantiv Secure Servers.', 'gateway-vantiv-woocommerce')
                 ),
-                'public_key'  => array(
-                    'title'       => __( 'Public key', 'gateway-vantiv-woocommerce' ),
-                    'type'        => 'text',
-                    'description' => __( 'Public key Vantiv. Required', 'gateway-vantiv-woocommerce' ),
-                    'desc_tip'    => true,
-                ),
-                'account_token'  => array(
-                    'title'       => __( 'Private key', 'gateway-vantiv-woocommerce' ),
-                    'type'        => 'text',
-                    'description' => __( 'Secret token used for authentication. Required', 'gateway-vantiv-woocommerce' ),
-                    'desc_tip'    => true,
-                ),
-                'account_id'  => array(
-                    'title'       => __( 'AccountID', 'gateway-vantiv-woocommerce' ),
-                    'type'        => 'text',
-                    'description' => __( 'Unique account identifier. Required', 'gateway-vantiv-woocommerce' ),
-                    'desc_tip'    => true,
-                ),
-                'user_name'  => array(
-                    'title'       => __( 'User name', 'gateway-vantiv-woocommerce' ),
-                    'type'        => 'text',
-                    'description' => __( 'The username supplied by Litle for accessing the site. Required', 'gateway-vantiv-woocommerce' ),
-                    'desc_tip'    => true,
-                ),
-                'password'  => array(
-                    'title'       => __( 'Password', 'gateway-vantiv-woocommerce' ),
-                    'type'        => 'password',
-                    'description' => __( 'The password supplied by Litle for accessing the site. Required', 'gateway-vantiv-woocommerce' ),
-                    'desc_tip'    => true,
-                ),
-                'acceptor_id'  => array(
-                    'title'       => __( 'MerchantID', 'gateway-vantiv-woocommerce' ),
-                    'type'        => 'text',
-                    'description' => __( 'Merchant ID. Required', 'gateway-vantiv-woocommerce' ),
-                    'desc_tip'    => true,
-                ),
-                'market_code'  => array(
-                    'title'       => __( 'Transaction Method', 'gateway-vantiv-woocommerce' ),
-                    'type'        => 'text',
-                    'description' => __( 'Type of industry. Required', 'gateway-vantiv-woocommerce' ),
-                    'desc_tip'    => true,
-                ),
-                'report_group'  => array(
-                    'title'       => __( 'Report Group', 'gateway-vantiv-woocommerce' ),
-                    'type'        => 'text',
-                    'description' => __( 'The exact name of the report group you want all orders to be added to. Optional', 'gateway-vantiv-woocommerce' ),
-                    'desc_tip'    => true,
-                ),
+				'AccountID'  => array(
+					'title'       => __( 'AccountID', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique account identifier. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'AccountToken'  => array(
+					'title'       => __( 'AccountToken', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique account token. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'AcceptorID'  => array(
+					'title'       => __( 'AcceptorID', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique acceptor id. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'ApplicationID'  => array(
+					'title'       => __( 'ApplicationID', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique application id. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'ApplicationVersion'  => array(
+					'title'       => __( 'ApplicationVersion', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique application version. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'ApplicationName'  => array(
+					'title'       => __( 'ApplicationName', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique application name. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'TerminalID'  => array(
+					'title'       => __( 'TerminalID', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique terminal id. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'TerminalCapabilityCode'  => array(
+					'title'       => __( 'TerminalCapabilityCode', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique terminal capability code. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'TerminalEnvironmentCode'  => array(
+					'title'       => __( 'TerminalEnvironmentCode', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique terminal environment code. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'CardholderPresentCode'  => array(
+					'title'       => __( 'CardholderPresentCode', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique card holder present code. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'CardInputCode'  => array(
+					'title'       => __( 'CardInputCode', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique card input code. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'CardPresentCode'  => array(
+					'title'       => __( 'CardPresentCode', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique card present code. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'MotoECICode'  => array(
+					'title'       => __( 'MotoECICode', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique moto ECI code. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+				'CVVPresenceCode'  => array(
+					'title'       => __( 'CVVPresenceCode', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Unique CVV presence code. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+                'CompanyName'  => array(
+					'title'       => __( 'CompanyName', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Your Company Name. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
+                'WelcomeMessage'  => array(
+					'title'       => __( 'WelcomeMessage', 'gateway-vantiv-woocommerce' ),
+					'type'        => 'text',
+					'description' => __( 'Welcome Message after order success. Required', 'gateway-vantiv-woocommerce' ),
+					'desc_tip'    => true,
+				),
                 'sandbox'      => array(
-                    'title'       => __( 'Sandbox', 'gateway-vantiv-woocommerce' ),
-                    'label'       => __( 'Enable', 'gateway-vantiv-woocommerce' ),
+                    'title'       => __('Sandbox', 'gateway-vantiv-woocommerce'),
+                    'label'       => __('Enable', 'gateway-vantiv-woocommerce'),
                     'type'        => 'checkbox',
-                    'description' => __( 'Sandbox mode', 'gateway-vantiv-woocommerce' ),
+                    'description' => __('Sandbox mode', 'gateway-vantiv-woocommerce'),
                     'desc_tip'    => true,
                 ),
             );
         }
-	
-	    public function save_payment_gateway_settings () {
+    
+        public function save_payment_gateway_settings ()
+        {
             $this->init_settings();
             $post_data = $this->get_post_data();
             $line = array();
-            $handle = fopen( __DIR__ . '/../vantiv_sdk/cnp/sdk/cnp_SDK_config.ini', 'w' );
+            $handle = fopen(__DIR__ . '/../vantiv_sdk/cnp/sdk/cnp_SDK_config.ini', 'w');
             if ( $handle ) {
                 foreach ( $this->get_form_fields() as $key => $field ) {
-                    //account_token Sandbox  market_code debugging debugging_email
-                    if ( $key == 'public_key' ) {
-                        $vantivPublicKeyID = $this->get_field_value( $key, $field, $post_data );
-                    }
-                    if ( $key == 'sandbox' ) {
-                        $sandbox = $this->get_field_value( $key, $field, $post_data );
-                    }
-                    if ( $key == 'user_name' ) {
-                        $account_name = $this->get_field_value( $key, $field, $post_data );
-                    }
-                    if ( $key == 'acceptor_id' ) {
-                        $currency_merchant_map = $this->get_field_value( $key, $field, $post_data );
-                    }
-                    if ( $key == 'password' ) {
-                        $password = $this->get_field_value( $key, $field, $post_data );
-                    }
-                    if ( $key == 'report_group' ) {
-                        $report_group = $this->get_field_value( $key, $field, $post_data );
-                    }
-                }
-                $line['user'] = $account_name;
-                $line['password'] = $password;
-                $line['currency_merchant_map ']['DEFAULT'] = $currency_merchant_map;
+					if ( $key == 'AccountID' ) {
+						$vantivAccountId = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'AccountToken' ) {
+						$vantivPublicKeyID = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'AcceptorID' ) {
+						$vantivAcceptorID = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'ApplicationID' ) {
+						$vantivApplicationID = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'ApplicationVersion' ) {
+						$vantivApplicationVersion = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'ApplicationName' ) {
+						$vantivApplicationName = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'TerminalID' ) {
+						$vantivTerminalID = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'TerminalCapabilityCode' ) {
+						$vantivTerminalCapabilityCode = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'TerminalEnvironmentCode' ) {
+						$vantivTerminalEnvironmentCode = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'CardholderPresentCode' ) {
+						$vantivCardholderPresentCode = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'CardInputCode' ) {
+						$vantivCardInputCode = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'CardPresentCode' ) {
+						$vantivCardPresentCode = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'MotoECICode' ) {
+						$vantivMotoECICode = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'CVVPresenceCode' ) {
+						$vantivCVVPresenceCode = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'CompanyName' ) {
+						$vantivCompanyName = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'WelcomeMessage' ) {
+						$vantivWelcomeMessage = $this->get_field_value( $key, $field, $post_data );
+					}
+					if ( $key == 'sandbox' ) {
+						$sandbox = $this->get_field_value( $key, $field, $post_data );
+					}
+				}
+				$line['AccountID']               = $vantivAccountId;
+				$line['AccountToken']            = $vantivPublicKeyID;
+				$line['AcceptorID']              = $vantivAcceptorID;
+				$line['ApplicationID']           = $vantivApplicationID;
+				$line['ApplicationVersion']      = $vantivApplicationVersion;
+				$line['ApplicationName']         = $vantivApplicationName;
+				$line['TerminalID']              = $vantivTerminalID;
+				$line['TerminalCapabilityCode']  = $vantivTerminalCapabilityCode;
+				$line['TerminalEnvironmentCode'] = $vantivTerminalEnvironmentCode;
+				$line['CardholderPresentCode']   = $vantivCardholderPresentCode;
+				$line['CardInputCode']           = $vantivCardInputCode;
+				$line['CardPresentCode']         = $vantivCardPresentCode;
+				$line['MotoECICode']             = $vantivMotoECICode;
+				$line['CVVPresenceCode']         = $vantivCVVPresenceCode;
+				if ( $sandbox == 'yes' ) {
+					$line['url'] = 'https://certtransaction.hostedpayments.com/';
+				} else {
+					$line['url'] = 'https://certtransaction.hostedpayments.com/';
+				}
 
-                if ( $sandbox == 'yes' ) {
-                    $line['url'] = 'https://www.testvantivcnp.com/sandbox/communicator/online';
-                } else {
-                    $line['url'] = 'https://payments.vantivcnp.com/vap/communicator/online';
-                }
-                $line['proxy']                   = '';
-                $line['batch_requests_path']     = '';
-                $line['cnp_requests_path']       = '';
-                $line['sftp_username']           = '';
-                $line['sftp_password']           = '';
-                $line['batch_url']               = '';
-                $line['tcp_port']                = '';
-                $line['tcp_timeout']             = '';
-                $line['sftp_timeout']            = '';
-                # ssl should be usd by default
-                $line['tcp_ssl']                 = '1';
-                $line['print_xml']               = '0';
-                $line['useEncryption']           = 'false';
-                $line['vantivPublicKeyID']       = $vantivPublicKeyID;
-                $line['gpgPassphrase']           = '';
-                $line['multiSite']               = 'false';
-                $line['multiSiteUrl1']           = '';
-                $line['multiSiteUrl2']           = '';
-                $line['printMultiSiteDebug']     = 'false';
-                $line['multiSiteErrorThreshold'] = '5';
-                $line['maxHoursWithoutSwitch']   = '48';
-                $line['deleteBatchFiles']        = '';
-                $line['timeout']                 = '500 ' .  PHP_EOL;
-                $line['reportGroup']             = $report_group . PHP_EOL;
-                $this->writeConfigPaymentSettings( $line, $handle );
+				$line['TransactionSetupMethod'] = '1';
+				$line['DeviceInputCode'] = '0';
+				$line['Device'] = '0';
+				$line['Embedded'] = '0';
+				$line['CVVRequired'] = '1';
+				$line['CompanyName'] = $vantivCompanyName;
+				$line['AutoReturn'] = '1';
+				$line['WelcomeMessage'] = $vantivWelcomeMessage;
+				$line['AddressEditAllowed'] = '0';
+				$line['MarketCode'] = '3';
+				$line['DuplicateCheckDisableFlag'] = '1';
+                $this->writeConfigPaymentSettings($line, $handle);
             }
-            fclose( $handle );
+            fclose($handle);
             foreach ( $this->get_form_fields() as $key => $field ) {
-                if ( 'title' !== $this->get_field_type( $field ) ) {
+                if ( 'title' !== $this->get_field_type($field) ) {
                     try {
-                        $this->settings[ $key ] = $this->get_field_value( $key, $field, $post_data );
+                        $this->settings[ $key ] = $this->get_field_value($key, $field, $post_data);
                     } catch ( Exception $e ) {
-                        $this->add_error( $e->getMessage() );
+                        $this->add_error($e->getMessage());
                     }
                 }
             }
 
-            return update_option( $this->get_option_key(), apply_filters( 'woocommerce_settings_api_sanitized_fields_' . $this->id, $this->settings ), 'yes' );
-	    }
-	    public function writeConfigPaymentSettings ( $line,$handle ) {
+            return update_option($this->get_option_key(), apply_filters('woocommerce_settings_api_sanitized_fields_' . $this->id, $this->settings), 'yes');
+        }
+        public function writeConfigPaymentSettings ( $line,$handle )
+        {
             foreach ( $line as $keys => $values ) {
-                fwrite( $handle, $keys . '' );
-                if ( is_array( $values ) ) {
+                fwrite($handle, $keys . '');
+                if ( is_array($values) ) {
                     foreach ( $values as $key2 => $value2 ) {
-                        fwrite( $handle, "['" . $key2 . "'] = " . $value2 .  PHP_EOL );
+                        fwrite($handle, "['" . $key2 . "'] = " . $value2 .  PHP_EOL);
                     }
                 } else {
-                    fwrite( $handle,' = ' . $values );
-                    fwrite( $handle, PHP_EOL );
+                    fwrite($handle, ' = ' . $values);
+                    fwrite($handle, PHP_EOL);
                 }
             }
         }
-	    public function admin_options () {
-            echo '<h3>' . __( 'Vantiv Payment Gateway', 'gateway-vantiv-woocommerce' ) . '</h3>';
-            echo '<p>' . __( 'Vantiv is most popular payment gateway for online shopping', 'gateway-vantiv-woocommerce' ) . '</p>';
+        public function admin_options ()
+        {
+            echo '<h3>' . __('Vantiv Payment Gateway', 'gateway-vantiv-woocommerce') . '</h3>';
+            echo '<p>' . __('Vantiv is most popular payment gateway for online shopping', 'gateway-vantiv-woocommerce') . '</p>';
             echo '<table class="form-table">';
                 // Generate the HTML For the settings form.
             $this->generate_settings_html();
@@ -213,20 +297,21 @@ if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
         /**
         *  There are no payment fields for vantiv, but we want to show the description if set.
         **/
-        public function payment_fields () {
+        public function payment_fields ()
+        {
             $description = $this->get_description();
-            $description = ! empty( $description ) ? $description : '';
-            
-            if ( $this->testmode ) {
-                /* translators: link to vantiv testing page */
-                $description .= '<br/>' . '(' . __( 'TEST MODE ENABLED. In test mode, you can use the card number 4457010000000009 with any CVC and a valid expiration date', 'gateway-vantiv-woocommerce' ) . ')';
-            }
+            $description = ! empty($description) ? $description : '';
 
-            $description = trim( $description );
+//            if ( $this->testmode ) {
+//                /* translators: link to vantiv testing page */
+//                $description .= '<br/>' . '(' . __('TEST MODE ENABLED. In test mode, you can use the card number 4457010000000009 4761739001020076 with any CVC and a valid expiration date', 'gateway-vantiv-woocommerce') . ')';
+//            }
 
-            echo  wpautop( wp_kses_post( $description ) );
+            $description = trim($description);
 
-            $this->elements_form();
+            echo  wpautop(wp_kses_post($description));
+
+//            $this->elements_form();
         }
 
         /**
@@ -235,113 +320,116 @@ if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
         * @since 4.0.0
         * @version 4.0.0
         **/
-        public function elements_form () {
+        public function elements_form ()
+        {
         ?>
-            <fieldset id="wc-<?php echo esc_attr( $this->id ); ?>-cc-form" class="wc-credit-card-form wc-payment-form" style="background:transparent;">
-                <?php do_action( 'woocommerce_credit_card_form_start', $this->id ); ?>
-
-                <div class="form-row form-row-wide">
-                    <label for="cc"><?php esc_html_e( 'Card Number', 'gateway-vantiv-woocommerce' ); ?> <span class="required">*</span></label>
-                    <input id="cc" type="tel" style="width: 100%;"  name="ccnumber" pattern="\d{4} \d{4} \d{4} \d{4}" class="masked" title="16-digit number" maxlength="19" placeholder="XXXX XXXX XXXX XXXX">
-                </div>
-
-                <div class="form-row form-row-first">
-                    <label for="expiration"><?php esc_html_e( 'Expiry Date', 'gateway-vantiv-woocommerce' ); ?> <span class="required">*</span></label>
-                    <input id="expiration" style="width: 100%;" class="masked" maxlength="5" type="tel" autocomplete="off" autocorrect="off" name="exp-date" placeholder="MM/YY" value=""  >
-                </div>
-
-                <div class="form-row form-row-last">
-                    <label for="vantiv-cvc-element"><?php esc_html_e( 'Card Code (CVC)', 'gateway-vantiv-woocommerce' ); ?> <span class="required">*</span></label>
-                    <input id="vantiv-cvc-element" style="width: 100%;" maxlength="3" type="password" autocomplete="off"  autocorrect="off" spellcheck="false" name="cvc" inputmode="numeric"  placeholder="CVC" value="">
-                </div>
-                <div class="clear"></div>
+<!--            <fieldset id="wc---><?php //echo esc_attr($this->id); ?><!---cc-form" class="wc-credit-card-form wc-payment-form" style="background:transparent;">-->
+<!--                --><?php //do_action('woocommerce_credit_card_form_start', $this->id); ?>
+<!---->
+<!--                <div class="form-row form-row-wide">-->
+<!--                    <label for="cc">--><?php //esc_html_e('Card Number', 'gateway-vantiv-woocommerce'); ?><!-- <span class="required">*</span></label>-->
+<!--                    <input id="cc" type="tel" style="width: 100%;"  name="ccnumber" pattern="\d{4} \d{4} \d{4} \d{4}" class="masked" title="16-digit number" maxlength="19" placeholder="XXXX XXXX XXXX XXXX">-->
+<!--                </div>-->
+<!---->
+<!--                <div class="form-row form-row-first">-->
+<!--                    <label for="expiration">--><?php //esc_html_e('Expiry Date', 'gateway-vantiv-woocommerce'); ?><!-- <span class="required">*</span></label>-->
+<!--                    <input id="expiration" style="width: 100%;" class="masked" maxlength="5" type="tel" autocomplete="off" autocorrect="off" name="exp-date" placeholder="MM/YY" value=""  >-->
+<!--                </div>-->
+<!---->
+<!--                <div class="form-row form-row-last">-->
+<!--                    <label for="vantiv-cvc-element">--><?php //esc_html_e('Card Code (CVC)', 'gateway-vantiv-woocommerce'); ?><!-- <span class="required">*</span></label>-->
+<!--                    <input id="vantiv-cvc-element" style="width: 100%;" maxlength="3" type="password" autocomplete="off"  autocorrect="off" spellcheck="false" name="cvc" inputmode="numeric"  placeholder="CVC" value="">-->
+<!--                </div>-->
+<!--                <div class="clear"></div>-->
                 <!-- Used to display form errors -->
-                <div class="vantiv-source-errors" role="alert"></div>
-                <br />
-                <?php do_action( 'woocommerce_credit_card_form_end', $this->id ); ?>
-                <div class="clear"></div>
-            </fieldset>
+<!--                <div class="vantiv-source-errors" role="alert"></div>-->
+<!--                <br />-->
+<!--                --><?php //do_action('woocommerce_credit_card_form_end', $this->id); ?>
+<!--                <div class="clear"></div>-->
+<!--            </fieldset>-->
         <?php
-      }
+        }
 
         /**
          * Receipt Page
          **/
-        function receipt_page ( $order ){
-            echo '<p>' . __( 'Thank you for your order, please click the button below to pay with Vantiv.', 'vantiv' ) . '</p>';
-            echo $this->generate_vantiv_form ( $order );
+        function receipt_page ( $order )
+        {
+            echo '<p>' . __('Thank you for your order, please click the button below to pay with Vantiv.', 'vantiv') . '</p>';
+            echo $this->generate_vantiv_form($order);
         }
         /**
          * Generate vantiv button link
          **/
-        public function generate_vantiv_form ( $order_id ) {
+        public function generate_vantiv_form ( $order_id )
+        {
 
-            global $woocommerce;
-
-            $order = new WC_Order( $order_id );
-            $txnid = $order_id . '_' . date( "ymds" );
-
-            $redirect_url = ( $this->redirect_page_id == "" || $this->redirect_page_id == 0 ) ? get_site_url() . "/" : get_permalink( $this->redirect_page_id );
-
-            $productinfo = "Order $order_id";
-
-            $str = "$this->merchant_id|$txnid|$order->order_total|$productinfo|$order->billing_first_name|$order->billing_email|||||||||||$this->salt";
-            $hash = hash( 'sha512', $str );
-
-            $vantiv_args = array(
-                    'key'         => $this->merchant_id,
-                    'txnid'       => $txnid,
-                    'amount'      => $order->order_total,
-                    'productinfo' => $productinfo,
-                    'firstname'   => $order->billing_first_name,
-                    'lastname'    => $order->billing_last_name,
-                    'address1'    => $order->billing_address_1,
-                    'address2'    => $order->billing_address_2,
-                    'city'        => $order->billing_city,
-                    'state'       => $order->billing_state,
-                    'country'     => $order->billing_country,
-                    'zipcode'     => $order->billing_zip,
-                    'email'       => $order->billing_email,
-                    'phone'       => $order->billing_phone,
-                    'surl'        => $redirect_url,
-                    'furl'        => $redirect_url,
-                    'curl'        => $redirect_url,
-                    'hash'        => $hash,
-                    'pg'          => 'NB'
-            );
-
-            $vantiv_args_array = array();
-
-            foreach ( $vantiv_args as $key => $value ) {
-                $vantiv_args_array[] = "<input type='hidden' name='$key' value='$value'/>";
-            }
-            return '<form action="' . $this->liveurl . '" method="post" id="vantiv_payment_form">
-                ' . implode( '', $vantiv_args_array ) . '
-                    <input type="submit" class="button-alt" id="submit_vantiv_payment_form" value="' . __( 'Pay via Vantiv', 'gateway-vantiv-woocommerce' ) . '" /> <a class="button cancel" href="' . $order->get_cancel_order_url() . '">' . __( 'Cancel order &amp; restore cart', 'gateway-vantiv-woocommerce' ) . '</a>
-                    <script type="text/javascript">
-                        jQuery(function(){
-                            jQuery("body").block(
-                            {
-                                message: "<img src=\"' . $woocommerce->plugin_url() . '/assets/images/ajax-loader.gif\" alt=\"Redirecting…\" style=\"float:left; margin-right: 10px;\" />' . __( 'Thank you for your order. We are now redirecting you to Payment Gateway to make payment.', 'gateway-vantiv-woocommerce' ) . '",
-                                overlayCSS:
-                                {
-                                    background: "#fff",
-                                    opacity: 0.6
-                                },
-                                css: {
-                                    padding:        20,
-                                    textAlign:      "center",
-                                    color:          "#555",
-                                    border:         "3px solid #aaa",
-                                    backgroundColor:"#fff",
-                                    cursor:         "wait",
-                                    lineHeight:"32px"
-                                }
-                            });
-                            jQuery("#submit_vantiv_payment_form").click();
-                        });
-                    </script>
-            </form>';
+//            global $woocommerce;
+//
+//            $order = new WC_Order($order_id);
+//            $txnid = $order_id . '_' . date("ymds");
+//
+//            $redirect_url = ( $this->redirect_page_id == "" || $this->redirect_page_id == 0 ) ? get_site_url() . "/" : get_permalink($this->redirect_page_id);
+//
+//            $productinfo = "Order $order_id";
+//
+//            $str = "$this->merchant_id|$txnid|$order->order_total|$productinfo|$order->billing_first_name|$order->billing_email|||||||||||$this->salt";
+//            $hash = hash('sha512', $str);
+//
+//            $vantiv_args = array(
+//                    'key'         => $this->merchant_id,
+//                    'txnid'       => $txnid,
+//                    'amount'      => $order->order_total,
+//                    'productinfo' => $productinfo,
+//                    'firstname'   => $order->billing_first_name,
+//                    'lastname'    => $order->billing_last_name,
+//                    'address1'    => $order->billing_address_1,
+//                    'address2'    => $order->billing_address_2,
+//                    'city'        => $order->billing_city,
+//                    'state'       => $order->billing_state,
+//                    'country'     => $order->billing_country,
+//                    'zipcode'     => $order->billing_zip,
+//                    'email'       => $order->billing_email,
+//                    'phone'       => $order->billing_phone,
+//                    'surl'        => $redirect_url,
+//                    'furl'        => $redirect_url,
+//                    'curl'        => $redirect_url,
+//                    'hash'        => $hash,
+//                    'pg'          => 'NB'
+//            );
+//
+//            $vantiv_args_array = array();
+//
+//            foreach ( $vantiv_args as $key => $value ) {
+//                $vantiv_args_array[] = "<input type='hidden' name='$key' value='$value'/>";
+//            }
+//            return '<form action="' . $this->liveurl . '" method="post" id="vantiv_payment_form">
+//                ' . implode('', $vantiv_args_array) . '
+//                    <input type="submit" class="button-alt" id="submit_vantiv_payment_form" value="' . __('Pay via Vantiv', 'gateway-vantiv-woocommerce') . '" /> <a class="button cancel" href="' . $order->get_cancel_order_url() . '">' . __('Cancel order &amp; restore cart', 'gateway-vantiv-woocommerce') . '</a>
+//                    <script type="text/javascript">
+//                        jQuery(function(){
+//                            jQuery("body").block(
+//                            {
+//                                message: "<img src=\"' . $woocommerce->plugin_url() . '/assets/images/ajax-loader.gif\" alt=\"Redirecting…\" style=\"float:left; margin-right: 10px;\" />' . __('Thank you for your order. We are now redirecting you to Payment Gateway to make payment.', 'gateway-vantiv-woocommerce') . '",
+//                                overlayCSS:
+//                                {
+//                                    background: "#fff",
+//                                    opacity: 0.6
+//                                },
+//                                css: {
+//                                    padding:        20,
+//                                    textAlign:      "center",
+//                                    color:          "#555",
+//                                    border:         "3px solid #aaa",
+//                                    backgroundColor:"#fff",
+//                                    cursor:         "wait",
+//                                    lineHeight:"32px"
+//                                }
+//                            });
+//                            jQuery("#submit_vantiv_payment_form").click();
+//                        });
+//                    </script>
+//            </form>';
 
 
         }
@@ -352,171 +440,233 @@ if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
         function process_payment ( $order_id ) {
             global $woocommerce;
             $order = new WC_Order( $order_id );
-
             $sale_info = array(
-                'orderId'       => $order_id,
-                'id'            => $order->get_user_id(),
-                'amount'        => str_replace( array( '.', '' ), '', $order->order_total ),
-                'orderSource'   => 'ecommerce',
-                'billToAddress' => array(
-                    'name'         => $order->billing_first_name . ' ' . $order->billing_last_name,
-                    'addressLine1' => $order->billing_address_1,
-                    'city'         => $order->billing_city,
-                    'state'        => $order->billing_state,
-                    'zip'          => $order->billing_postcode,
-                    'country'      => $order->billing_country,
+                'ReturnURL'     => $this->get_return_url( $order ),
+                'Address' => array(
+                    'BillingZipcode'      => $order->billing_postcode,
+                    'BillingName'         => $order->billing_first_name . ' ' . $order->billing_last_name,
+                    'BillingAddress1'     => $order->billing_address_1,
+                    'BillingCity'         => $order->billing_city,
+                    'BillingState'        => $order->billing_state,
+                    'BillingCountry'      => $order->billing_country,
                 ),
-                'card'          => array(
-                    'number'            => str_replace( array( ' ', '' ), '',  sanitize_text_field( $_POST['ccnumber'] ) ),
-                    'expDate'           => str_replace( array( '/', ' '), '',  sanitize_text_field( $_POST['exp-date'] ) ),
-                    'cardValidationNum' => ( isset( $_POST['cvc'] ) ) ?  sanitize_text_field( $_POST['cvc'] ) : '',
-                    'type'              => 'MC',
+                'Transaction'   => array(
+                    'TransactionAmount' => str_replace( array( '.', '' ), '', $order->order_total ),
+                    'ReferenceNumber'   => $order_id,
                 )
             );
 
             $initialize = new CnpOnlineRequest();
             $saleResponse = $initialize->saleRequest( $sale_info );
-
-            if ( XmlParser::getNode( $saleResponse, 'message' ) != 'Approved' )
-                throw new \Exception( 'CnpSaleTransaction does not get the right response' );
-
-            // 1 or 4 means the transaction was a success
-            if ( XmlParser::getNode( $saleResponse, 'message' ) == 'Approved' ) {
-                // Payment successful
-                $order->add_order_note( __( 'Vantiv complete payment.', 'gateway-vantiv-woocommerce' ) );
-
-                // paid order marked
-                $order->payment_complete();
-                // this is important part for empty cart
-                $woocommerce->cart->empty_cart();
-                // Redirect to thank you page
-                return array(
-                    'result'   => 'success',
-                    'redirect' => $this->get_return_url( $order ),
-                );
-            } else {
-                //transiction fail
-                wc_add_notice( XmlParser::getNode( $saleResponse, 'message' ), 'error' );
-                $order->add_order_note( 'Error: ' . XmlParser::getNode( $saleResponse, 'message' ) );
-            }
+            var_dump($saleResponse);
+            die();
+//            if ( XmlParser::getNode( $saleResponse, 'message' ) != 'Approved' )
+//                throw new \Exception( 'CnpSaleTransaction does not get the right response' );
+//
+//            // 1 or 4 means the transaction was a success
+//            if ( XmlParser::getNode( $saleResponse, 'message' ) == 'Approved' ) {
+//                // Payment successful
+//                $order->add_order_note( __( 'Vantiv complete payment.', 'gateway-vantiv-woocommerce' ) );
+//
+//                // paid order marked
+//                $order->payment_complete();
+//                // this is important part for empty cart
+//                $woocommerce->cart->empty_cart();
+//                // Redirect to thank you page
+//                return array(
+//				'result'   => 'success',
+//				'redirect' => $redirect_url,
+//			);
+//            } else {
+//                //transiction fail
+//                wc_add_notice( XmlParser::getNode( $saleResponse, 'message' ), 'error' );
+//                $order->add_order_note( 'Error: ' . XmlParser::getNode( $saleResponse, 'message' ) );
+//            }
         }
+//        function process_payment( $order_id )
+//        {
+//			$url = "https://certtransaction.elementexpress.com";
+//			$input_xml ='<TransactionSetup xmlns="https://transaction.elementexpress.com">
+//                <Credentials>
+//                    <AccountID>1062601</AccountID>
+//                    <AccountToken>067241B3DBCF804AEC36CFF3446A3DDCB31F586152AFFA8059F6520AC288A2B7C040C901</AccountToken>
+//                    <AcceptorID>874767542</AcceptorID>
+//                </Credentials>
+//                <Application>
+//                    <ApplicationID>10871</ApplicationID>
+//                    <ApplicationName>XML</ApplicationName>
+//                    <ApplicationVersion>1.1.1</ApplicationVersion>
+//                </Application>
+//                <TransactionSetup>
+//                    <TransactionSetupMethod>1</TransactionSetupMethod>
+//                    <DeviceInputCode>0</DeviceInputCode>
+//                    <Device>0</Device>
+//                    <Embedded>0</Embedded>
+//                    <CVVRequired>1</CVVRequired>
+//                    <CompanyName></CompanyName>
+//                    <AutoReturn>1</AutoReturn>
+//                    <WelcomeMessage></WelcomeMessage>
+//                    <ReturnURL>http://vantiv.loc/checkout/</ReturnURL>
+//                </TransactionSetup>
+//                <Address>
+//                    <AddressEditAllowed>0</AddressEditAllowed>
+//                    <BillingZipcode>81301</BillingZipcode>
+//                    <BillingName>Liv</BillingName>
+//                    <BillingAddress1>123 Test Street</BillingAddress1>
+//                    <BillingCity>Durango</BillingCity>
+//                    <BillingState>Colorado</BillingState>
+//                </Address>
+//                <Transaction>
+//                    <TransactionAmount>1.50</TransactionAmount>
+//                    <MarketCode>3</MarketCode>
+//                    <ReferenceNumber>887766</ReferenceNumber>
+//                    <DuplicateCheckDisableFlag>1</DuplicateCheckDisableFlag>
+//                </Transaction>
+//                <Terminal>
+//                    <TerminalID>01</TerminalID>
+//                    <CVVPresenceCode>2</CVVPresenceCode>
+//                    <CardPresentCode>2</CardPresentCode>
+//                    <CardholderPresentCode>7</CardholderPresentCode>
+//                    <CardInputCode>4</CardInputCode>
+//                    <TerminalCapabilityCode>6</TerminalCapabilityCode>
+//                    <TerminalEnvironmentCode>6</TerminalEnvironmentCode>
+//                    <MotoECICode>1</MotoECICode>
+//                </Terminal>
+//            </TransactionSetup>';
+//			$ch = curl_init();
+//			curl_setopt($ch, CURLOPT_URL, $url);
+//			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+//			curl_setopt($ch, CURLOPT_POST, 1);
+//			curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: text/xml'));
+//			curl_setopt($ch, CURLOPT_POSTFIELDS,$input_xml);
+//			curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+//
+//			$server_output = curl_exec($ch);
+//
+//			curl_close($ch);
+//	        $xml_parse = simplexml_load_string($server_output);
+//			$xml = $this->xml2array($xml_parse);
+//			$redirect_url = 'https://certtransaction.hostedpayments.com/?TransactionSetupID=' . $xml['Response'][0]['TransactionSetup'][0]['TransactionSetupID'];
+//			return array(
+//				'result'   => 'success',
+//				'redirect' => $redirect_url,
+//			);
+//
+//
+//        }
+		public function xml2array($xml){
+			ini_set('display_errors', '1');
+			ini_set('display_startup_errors', '1');
+			error_reporting(E_ALL);
+			$arr = array();
+			
+			foreach ($xml->children() as $r)
+			{
+				$t = array();
+				if(count($r->children()) == 0)
+				{
+					$arr[$r->getName()] = strval($r);
+				}
+				else
+				{
+					$arr[$r->getName()][] = $this->xml2array($r);
+				}
+			}
+			return $arr;
+		}
 
-        public function validate_fields () {
-            $card_number = str_replace( array( ' ', '' ), '',  sanitize_text_field( $_POST['ccnumber'] ) );
-            $card_exp_date = str_replace( array( '/', ' ' ), '',  sanitize_text_field( $_POST['exp-date'] ) );
-            $card_cvc = ( isset( $_POST['cvc'] ) ) ?  sanitize_text_field( $_POST['cvc'] )  : '';
-            if ( empty( $card_number ) ) {
-                wc_add_notice( 'Card Number is required!', 'error' );
-                return false;
-            }
-            if ( empty( $card_exp_date ) ) {
-                wc_add_notice( 'Card Expiry Date is required!', 'error' );
-                return false;
-            }
-            if ( empty( $card_cvc ) ) {
-                wc_add_notice( 'Card Code (CVC) is required!', 'error' );
-                return false;
-            }
-            if ( strlen( $card_number ) < 16 ) {
-                wc_add_notice( 'The card number is incomplete!', 'error' );
-                return false;
-            }
-            if ( strlen( $card_exp_date ) < 4 ) {
-                wc_add_notice( 'The card`s expiration date is incomplete!', 'error' );
-                return false;
-            }
-            if ( strlen( $card_cvc ) < 3 ) {
-                wc_add_notice( 'The card`s security code is incomplete!', 'error' );
-                return false;
-            }
-            return true;
-
+        public function validate_fields ()
+        {
         }
 
         /**
         * Check for valid vantiv server callback
         **/
-        function check_vantiv_response () {
+        function check_vantiv_response ()
+        {
             global $woocommerce;
-            if ( isset( $_REQUEST['txnid'] ) && isset( $_REQUEST['mihpayid'] ) ) {
-                $order_id_time = ( isset( $_REQUEST['txnid'] ) ) ?  sanitize_text_field( $_REQUEST['txnid'] )  : '';
-                $order_id = explode( '_', $order_id_time );
-                $order_id = (int) $order_id[0];
-                if ( $order_id != '' ) {
-                    try {
-                        $order = new WC_Order( $order_id );
-                        $merchant_id = ( isset( $_REQUEST['key'] ) ) ?  sanitize_text_field( $_REQUEST['key'] )  : '';
-                        $amount = ( isset( $_REQUEST['Amount'] ) ) ?  sanitize_text_field( $_REQUEST['Amount'] )  : '';
-                        $hash = ( isset( $_REQUEST['hash'] ) ) ?  sanitize_text_field( $_REQUEST['hash'] )  : '';
-
-                        $status = ( isset( $_REQUEST['status'] ) ) ?  sanitize_text_field( $_REQUEST['status'] )  : '';
-                        $productinfo = "Order $order_id";
-                        echo $hash;
-                        echo "{$this->salt}|$status|||||||||||{$order->billing_email}|{$order->billing_first_name}|$productinfo|{$order->order_total}|$order_id_time|{$this->merchant_id}";
-                        $checkhash = hash( 'sha512', "{$this->salt}|$status|||||||||||{$order->billing_email}|{$order->billing_first_name}|$productinfo|{$order->order_total}|$order_id_time|{$this->merchant_id}" );
-                        $transauthorised = false;
-                        if ( $order->status !== 'completed' ) {
-                            if ( $hash == $checkhash ) {
-                                $status = strtolower( $status );
-
-                                if ( $status == "success" ) {
-                                    $transauthorised = true;
-                                    $this->msg['message'] = "Thank you for shopping with us. Your account has been charged and your transaction is successful. We will be shipping your order to you soon.";
-                                    $this->msg['class'] = 'woocommerce_message';
-                                    if ( $order->status == 'processing' ) {
-
-                                    } else {
-                                        $order->payment_complete();
-                                        $order->add_order_note( 'Vantiv payment successful<br/>Unnique Id from Vantiv: ' . esc_html($_REQUEST['mihpayid'] ) );
-                                        $order->add_order_note( $this->msg['message'] );
-                                        $woocommerce->cart->empty_cart();
-                                    }
-                                } else if ( $status == "pending" ) {
-                                    $this->msg['message'] = "Thank you for shopping with us. Right now your payment staus is pending, We will keep you posted regarding the status of your order through e-mail";
-                                    $this->msg['class'] = 'woocommerce_message woocommerce_message_info';
-                                    $order->add_order_note( 'Vantiv payment status is pending<br/>Unnique Id from Vantiv: ' . esc_html($_REQUEST['mihpayid'] ) );
-                                    $order->add_order_note( $this->msg['message'] );
-                                    $order->update_status( 'on-hold' );
-                                    $woocommerce->cart->empty_cart();
-                                } else {
-                                    $this->msg['class'] = 'woocommerce_error';
-                                    $this->msg['message'] = "Thank you for shopping with us. However, the transaction has been declined.";
-                                    $order->add_order_note( 'Transaction Declined: ' . esc_html($_REQUEST['Error'] ) );
-
-                                    //Here you need to put in the routines for a failed
-                                    //transaction such as sending an email to customer
-                                    //setting database status etc etc
-                                }
-                            } else {
-                                $this->msg['class'] = 'woocommerce-error';
-                                $this->msg['message'] = "Security Error. Illegal access detected";
-                                
-                                //Here you need to simply ignore this and dont need
-                                //to perform any operation in this condition
-                            }
-                            if ( $transauthorised == false ) {
-                                $order->update_status('failed');
-                                $order->add_order_note('Failed');
-                                $order->add_order_note( $this->msg['message'] );
-
-                            }
-                            add_action( 'the_content', array( &$this, 'showMessage' ) );
-                        }
-                    } catch ( Exception $e ) {
-                        // $errorOccurred = true;
-                        $this->msg['class'] = 'woocommerce-error';
-                        $this->msg['message'] = 'Error';
-                    }
-                }
-            }
+//            var_dump($_REQUEST);
+//            if ( isset($_REQUEST['txnid']) && isset($_REQUEST['mihpayid']) ) {
+//                $order_id_time = ( isset($_REQUEST['txnid']) ) ?  sanitize_text_field($_REQUEST['txnid'])  : '';
+//                $order_id = explode('_', $order_id_time);
+//                $order_id = (int) $order_id[0];
+//                if ( $order_id != '' ) {
+//                    try {
+//                        $order = new WC_Order($order_id);
+//                        $merchant_id = ( isset($_REQUEST['key']) ) ?  sanitize_text_field($_REQUEST['key'])  : '';
+//                        $amount = ( isset($_REQUEST['Amount']) ) ?  sanitize_text_field($_REQUEST['Amount'])  : '';
+//                        $hash = ( isset($_REQUEST['hash']) ) ?  sanitize_text_field($_REQUEST['hash'])  : '';
+//
+//                        $status = ( isset($_REQUEST['status']) ) ?  sanitize_text_field($_REQUEST['status'])  : '';
+//                        $productinfo = "Order $order_id";
+//                        echo $hash;
+//                        echo "{$this->salt}|$status|||||||||||{$order->billing_email}|{$order->billing_first_name}|$productinfo|{$order->order_total}|$order_id_time|{$this->merchant_id}";
+//                        $checkhash = hash('sha512', "{$this->salt}|$status|||||||||||{$order->billing_email}|{$order->billing_first_name}|$productinfo|{$order->order_total}|$order_id_time|{$this->merchant_id}");
+//                        $transauthorised = false;
+//                        if ( $order->status !== 'completed' ) {
+//                            if ( $hash == $checkhash ) {
+//                                $status = strtolower($status);
+//
+//                                if ( $status == "success" ) {
+//                                    $transauthorised = true;
+//                                    $this->msg['message'] = "Thank you for shopping with us. Your account has been charged and your transaction is successful. We will be shipping your order to you soon.";
+//                                    $this->msg['class'] = 'woocommerce_message';
+//                                    if ( $order->status == 'processing' ) {
+//
+//                                    } else {
+//                                        $order->payment_complete();
+//                                        $order->add_order_note('Vantiv payment successful<br/>Unnique Id from Vantiv: ' . esc_html($_REQUEST['mihpayid']));
+//                                        $order->add_order_note($this->msg['message']);
+//                                        $woocommerce->cart->empty_cart();
+//                                    }
+//                                } else if ( $status == "pending" ) {
+//                                    $this->msg['message'] = "Thank you for shopping with us. Right now your payment staus is pending, We will keep you posted regarding the status of your order through e-mail";
+//                                    $this->msg['class'] = 'woocommerce_message woocommerce_message_info';
+//                                    $order->add_order_note('Vantiv payment status is pending<br/>Unnique Id from Vantiv: ' . esc_html($_REQUEST['mihpayid']));
+//                                    $order->add_order_note($this->msg['message']);
+//                                    $order->update_status('on-hold');
+//                                    $woocommerce->cart->empty_cart();
+//                                } else {
+//                                    $this->msg['class'] = 'woocommerce_error';
+//                                    $this->msg['message'] = "Thank you for shopping with us. However, the transaction has been declined.";
+//                                    $order->add_order_note('Transaction Declined: ' . esc_html($_REQUEST['Error']));
+//
+//                                    //Here you need to put in the routines for a failed
+//                                    //transaction such as sending an email to customer
+//                                    //setting database status etc etc
+//                                }
+//                            } else {
+//                                $this->msg['class'] = 'woocommerce-error';
+//                                $this->msg['message'] = "Security Error. Illegal access detected";
+//
+//                                //Here you need to simply ignore this and dont need
+//                                //to perform any operation in this condition
+//                            }
+//                            if ( $transauthorised == false ) {
+//                                $order->update_status('failed');
+//                                $order->add_order_note('Failed');
+//                                $order->add_order_note($this->msg['message']);
+//
+//                            }
+//                            add_action('the_content', array( &$this, 'showMessage' ));
+//                        }
+//                    } catch ( Exception $e ) {
+//                        // $errorOccurred = true;
+//                        $this->msg['class'] = 'woocommerce-error';
+//                        $this->msg['message'] = 'Error';
+//                    }
+//                }
+//            }
         }
 
-        public function showMessage ( $content ) {
+        public function showMessage ( $content )
+        {
             return '<div class="box ' . $this->msg['class'] . '-box">' . $this->msg['message'] . '</div>' . $content;
         }
          // get all pages
-        public function get_pages ( $title = false, $indent = true ) {
-            $wp_pages = get_pages( 'sort_column=menu_order' );
+        public function get_pages ( $title = false, $indent = true )
+        {
+            $wp_pages = get_pages('sort_column=menu_order');
             $page_list = array();
             if ( $title ) $page_list[] = $title;
             foreach ( $wp_pages as $page ) {
@@ -526,7 +676,7 @@ if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
                     $has_parent = $page->post_parent;
                     while ( $has_parent ) {
                         $prefix .=  ' - ';
-                        $next_page = get_page( $has_parent );
+                        $next_page = get_page($has_parent);
                         $has_parent = $next_page->post_parent;
                     }
                 }
@@ -535,5 +685,24 @@ if ( ! class_exists( 'WC_vantiv_Pay' ) ) {
             }
             return $page_list;
         }
+		/**
+		 * Logging method.
+		 *
+		 * @param string $message Log message.
+		 * @param string $level   Optional. Default 'info'. Possible values:
+		 *                        emergency|alert|critical|error|warning|notice|info|debug.
+		 */
+		public static function log($message, $level='info')
+		{
+			if (self::$log_enabled) {
+				if (empty(self::$log)) {
+					self::$log = wc_get_logger();
+				}
+				
+				self::$log->log($level, $message, [ 'source' => 'vantiv' ]);
+			}
+			
+		}//end log()
     }
+    
 }

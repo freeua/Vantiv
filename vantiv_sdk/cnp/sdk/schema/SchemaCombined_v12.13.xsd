@@ -628,6 +628,32 @@
             <xs:totalDigits value="1" />
         </xs:restriction>
     </xs:simpleType>
+    <xs:complexType name="credentials">
+        <xs:sequence>
+            <xs:element name="accountid" type="xp:customNumberType" minOccurs="0"/>
+            <xs:element name="accounttoken" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="acceptorid" type="xp:customNumberType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="application">
+        <xs:sequence>
+            <xs:element name="applicationid" type="xp:customNumberType" minOccurs="0"/>
+            <xs:element name="applicationversion" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="applicationname" type="xp:customNumberType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Terminal">
+        <xs:sequence>
+            <xs:element name="TerminalID" type="xp:customNumberType" minOccurs="0"/>
+            <xs:element name="TerminalCapabilityCode" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="TerminalEnvironmentCode" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="CardholderPresentCode" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="CardInputCode" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="CardPresentCode" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="MotoECICode" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="CVVPresenceCode" type="xp:customNumberType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
 
     <xs:complexType name="contact">
         <xs:all>
@@ -668,18 +694,19 @@
 
     <xs:complexType name="cardType">
         <xs:sequence>
-            <xs:choice>
-                <xs:sequence>
-                    <xs:element name="type" type="xp:methodOfPaymentTypeEnum" />
-                    <xs:element name="number" type="xp:ccAccountNumberType" minOccurs="0"/>
-                    <xs:element name="expDate" type="xp:expDateType" minOccurs="0" />
-                </xs:sequence>
-                <xs:sequence>
-                    <xs:element name="track" type="xp:trackDataType" />
-                </xs:sequence>
-            </xs:choice>
-            <xs:element name="cardValidationNum" type="xp:cvNumType" minOccurs="0" />
-            <xs:element name="pin" type="xp:pinType" minOccurs="0" />
+            <xs:element name="cardnumber" type="xp:ccAccountNumberType" minOccurs="0"/>
+            <xs:element name="expirationmonth" type="xp:expDateType" minOccurs="0" />
+            <xs:element name="expirationyear" type="xp:expDateType" minOccurs="0" />
+            <xs:element name="cvv" type="xp:cvNumType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="transactionType">
+        <xs:sequence>
+            <xs:element name="transactionAmount" type="xp:customNumberType" minOccurs="0"/>
+            <xs:element name="marketCode" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="ReferenceNumber" type="xp:customNumberType" minOccurs="0" />
+            <xs:element name="TicketNumber" type="xp:customNumberType" minOccurs="0" />
         </xs:sequence>
     </xs:complexType>
 
@@ -765,6 +792,13 @@
         </xs:restriction>
     </xs:simpleType>
 
+    <xs:simpleType name="customNumberType">
+        <xs:restriction base="xs:integer">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="1028" />
+        </xs:restriction>
+    </xs:simpleType>
+
     <xs:simpleType name="encryptedTrackType">
         <xs:restriction base="xs:string">
             <xs:minLength value="1"/>
@@ -794,8 +828,8 @@
     </xs:simpleType>
     <xs:simpleType name="expDateType">
         <xs:restriction base="xs:string">
-            <xs:minLength value="4" />
-            <xs:maxLength value="4" />
+            <xs:minLength value="2" />
+            <xs:maxLength value="2" />
         </xs:restriction>
     </xs:simpleType>
     <xs:simpleType name="trackDataType">

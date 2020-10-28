@@ -46,94 +46,58 @@ function initialize()
 
     $handle = @fopen('./cnp_SDK_config.ini', "w");
     if ($handle) {
-        print "Welcome to Vantiv eCommerce PHP_SDK" . PHP_EOL;
-        print "Please input your user name: ";
-        $line['user'] = formatConfigValue(STDIN);
-        print "Please input your password: ";
-        $line['password'] = formatConfigValue(STDIN);
-        print "Please input your merchantId: ";
-        $line['currency_merchant_map ']['DEFAULT'] = formatConfigValue(STDIN);
-        print "Please choose Cnp url from the following list (example: 'sandbox') or directly input another URL: \n" .
-            "sandbox => 'https://www.testvantivcnp.com/sandbox/communicator/online https://www.testvantivcnp.com/sandbox/new/sandbox/communicator/online https://www.testvantivcnp.com/sandbox/new/sandbox/communicator/online' \n" .
-            "postlive => https://payments.vantivpostlive.com/vap/communicator/online https://payments.east.vantivpostlive.com/vap/communicator/online https://payments.west.vantivpostlive.com/vap/communicator/online \n" .
-            "transact-postlive => https://transact.vantivpostlive.com/vap/communicator/online \n" .
-            "production => https://payments.vantivcnp.com/vap/communicator/online https://payments.east.vantivcnp.com/vap/communicator/online https://payments.west.vantivcnp.com/vap/communicator/online \n" .
-            "production-transact => https://transact.vantivcnp.com/vap/communicator/online \n" .
-            "prelive => https://payments.vantivprelive.com/vap/communicator/online https://payments.east.vantivprelive.com/vap/communicator/online https://payments.west.vantivprelive.com/vap/communicator/online \n" .
-            "transact-prelive => https://transact.vantivprelive.com/vap/communicator/online" . PHP_EOL;
+        print "Welcome to Vantiv Express eCommerce" . PHP_EOL;
+        print "Please input your AccountID: ";
+        $line['AccountID'] = formatConfigValue(STDIN);
+        print "Please input your AccountToken: ";
+        $line['AccountToken'] = formatConfigValue(STDIN);
+        print "Please input your AcceptorID: ";
+        $line['AcceptorID'] = formatConfigValue(STDIN);
+        print "Please input your ApplicationID: ";
+        $line['ApplicationID'] = formatConfigValue(STDIN);
+        print "Please input your ApplicationVersion: ";
+        $line['ApplicationVersion'] = formatConfigValue(STDIN);
+        print "Please input your ApplicationName: ";
+        $line['ApplicationName'] = formatConfigValue(STDIN);
+        print "Please input your TerminalID: ";
+        $line['TerminalID'] = formatConfigValue(STDIN);
+        print "Please input your TerminalCapabilityCode: ";
+        $line['TerminalCapabilityCode'] = formatConfigValue(STDIN);
+        print "Please input your TerminalCapabilityCode: ";
+        $line['TerminalCapabilityCode'] = formatConfigValue(STDIN);
+        print "Please input your CardholderPresentCode: ";
+        $line['CardholderPresentCode'] = formatConfigValue(STDIN);
+        print "Please input your CardInputCode: ";
+        $line['CardInputCode'] = formatConfigValue(STDIN);
+        print "Please input your CardPresentCode: ";
+        $line['CardPresentCode'] = formatConfigValue(STDIN);
+        print "Please input your MotoECICode: ";
+        $line['MotoECICode'] = formatConfigValue(STDIN);
+        print "Please input your CVVPresenceCode: ";
+        $line['CVVPresenceCode'] = formatConfigValue(STDIN);
+        print "Please choose url from the following list (example: 'sandbox') or directly input another URL: \n" .
+            "sandbox => 'https://certtransaction.elementexpress.com/' \n" .
+            "transact-express => https://certtransaction.elementexpress.com/ \n" .
         $url = UrlMapper::getUrl(trim(fgets(STDIN)));
-
-
+        
         if (is_array($url)){
-            $line['url'] = $url[0];
-            $line['multiSiteUrl1'] = $url[1];
-            $line['multiSiteUrl2'] = $url[2];
+            $line['URL'] = $url[0];
         }else {
-            $line['url'] = $url;
-        }
-        print "Please input the proxy, if no proxy hit enter key: ";
-        $line['proxy'] = formatConfigValue(STDIN);
-
-        print "Batch processing saves files to disk. \n";
-        print "Please input a directory to save these files. " .
-            "If you are not using batch processing, you may hit enter. ";
-        $dir = formatConfigValue(STDIN);
-        $line['batch_requests_path'] = $dir;
-        $line['cnp_requests_path'] = $dir;
-
-        print "Please input your SFTP username. If you are not using SFTP, you may hit enter. ";
-        $line['sftp_username'] = formatConfigValue(STDIN);
-        print "Please input your SFTP password. If you are not using SFTP, you may hit enter. ";
-        $line['sftp_password'] = formatConfigValue(STDIN);
-        print "Please input the URL for batch processing. If you are not using batch processing, you may hit enter. ";
-        $line['batch_url'] = formatConfigValue(STDIN);
-        print "Please input the port for stream batch delivery. " .
-            "If you are not using stream batch delivery, you may hit enter. ";
-        $line['tcp_port'] = formatConfigValue(STDIN);
-        print "Please input the timeout (in seconds) for stream batch delivery. " .
-            "If you are not using stream batch delivery, you may hit enter. ";
-        $line['tcp_timeout'] = formatConfigValue(STDIN);
-        print "Please input the timeout (in seconds) for batch response. " .
-            "If you are not using stream batch delivery, you may hit enter. ";
-        $line['sftp_timeout'] = formatConfigValue(STDIN);
-        # ssl should be usd by default
-        $line['tcp_ssl'] = '1';
-        $line['print_xml'] = '0';
-        print "Use PGP encryption for batch files? (y/n) (No encryption by default): ";
-        $useEncryption = formatConfigValue(STDIN);
-        if(("y" == $useEncryption) || ("true" == $useEncryption) || ("yes" == $useEncryption)){
-            $line['useEncryption'] = "true";
-            print "Import Vantiv's public key to gpg key ring? (y/n): ";
-            $import = formatConfigValue(STDIN);
-            if(("y" == $import) || ("yes" == $import) || ("true" == $import)) {
-                print "Please input path to Vantiv's public key (for encryption of batch requests) :";
-                $keyFile = formatConfigValue(STDIN);
-                $line['vantivPublicKeyID'] = PgpHelper::importKey($keyFile);
-            }
-            else{
-                print "Please input key ID for Vantiv's public key (imported to your key ring) :";
-                $line['vantivPublicKeyID'] = formatConfigValue(STDIN);
-            }
-            print "Please input passphrase for decryption :";
-            $line['gpgPassphrase'] = formatConfigValue(STDIN);
-        }
-        else{
-            $line['useEncryption'] = "false";
-            $line['vantivPublicKeyID'] = "";
-            $line['gpgPassphrase'] = "";
+            $line['URL'] = $url;
         }
 
-        $line['multiSiteUrl1'] = "";
-        $line['multiSiteUrl2'] = "";
-        $line['multiSite'] = "false";
-        $line['printMultiSiteDebug'] = "false";
-        $line['multiSiteErrorThreshold'] = '5';
-        $line['maxHoursWithoutSwitch'] = '48';
-        $line['deleteBatchFiles'] = "";
+		$line['TransactionSetupMethod'] = formatConfigValue(STDIN);
+		$line['DeviceInputCode'] = formatConfigValue(STDIN);
+		$line['Device'] = formatConfigValue(STDIN);
+		$line['Embedded'] = formatConfigValue(STDIN);
+		$line['CVVRequired'] = formatConfigValue(STDIN);
+		$line['CompanyName'] = formatConfigValue(STDIN);
+		$line['AutoReturn'] = formatConfigValue(STDIN);
+		$line['WelcomeMessage'] = formatConfigValue(STDIN);
+		$line['AddressEditAllowed'] = formatConfigValue(STDIN);
+		$line['MarketCode'] = formatConfigValue(STDIN);
+		$line['DuplicateCheckDisableFlag'] = formatConfigValue(STDIN);
         writeConfig($line,$handle);
-        #default http timeout set to 500 ms
-        fwrite($handle, "timeout =  500".  PHP_EOL);
-        fwrite($handle, "reportGroup = Default Report Group".  PHP_EOL);
     }
     fclose($handle);
     print "The Vantiv eCommerce configuration file has been generated, " .

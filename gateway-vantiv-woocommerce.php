@@ -151,7 +151,7 @@ function woocommerce_gateway_vantiv_init () {
 			 * @version 4.0.0
 			 */
 			public function add_gateways ( $methods ) {
-				$methods[] = esc_html__( 'WC_vantiv_Pay', 'gateway-vantiv-woocommerce' );
+				$methods[] = esc_html__( 'WC_Gateway_Vantiv', 'gateway-vantiv-woocommerce' );
     			return $methods;
 			}
 			

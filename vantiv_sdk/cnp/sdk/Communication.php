@@ -29,33 +29,27 @@ class Communication
     {
         $config = Obj2xml::getConfig($hash_config);
 
-
         if ((int) $config['print_xml']) {
             echo $req;
         }
         $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_PROXY, $config['proxy']);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: text/xml; charset=UTF-8','Expect: '));
+        
         $commManager = CommManager::instance($config);
         $requestTarget = $commManager->findUrl();
 
         curl_setopt($ch, CURLOPT_URL, $requestTarget['targetUrl']);
+		curl_setopt($ch, CURLOPT_POST, true);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: text/xml; charset=UTF-8','Expect: '));
         curl_setopt($ch, CURLOPT_POSTFIELDS, $req);
-        curl_setopt($ch, CURLOPT_HTTPPROXYTUNNEL, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $config['timeout']);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,2);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSLVERSION, 6);
         curl_setopt($ch, CURLINFO_HEADER_OUT, true);
-
-
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 300);
+		
         $output = curl_exec($ch);
-
-
-
+        
         $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         if (! $output) {
             if ($responseCode == 'CURLE_OPERATION_TIMEDOUT'){

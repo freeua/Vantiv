@@ -25,32 +25,15 @@
 namespace cnp\sdk;
 class UrlMapper
 {
-    const POSTLIVE = "postlive";
+    const Express = "express";
     const SANDBOX = "sandbox";
-    const PRODUCTION = "production";
-    const TRANSACT_PRODUCTION = "transact_production";
-    const TRANSACT_PRELIVE = "transact_prelive";
-    const TRANSACT_POSTLIVE = "transact_postlive";
-    const PRELIVE = "prelive";
-
     public static function getUrl($cnpEnv)
     {
-        $cnpOnlineCtx = 'vap/communicator/online';
         if ($cnpEnv == UrlMapper::SANDBOX)
-            return array('https://www.testvantivcnp.com/sandbox/communicator/online','https://www.testvantivcnp.com/sandbox/new/sandbox/communicator/online','https://www.testvantivcnp.com/sandbox/new/sandbox/communicator/online');
-        elseif ($cnpEnv == UrlMapper::PRELIVE)
-            return array('https://payments.vantivprelive.com/vap/communicator/online', 'https://payments.east.vantivprelive.com/vap/communicator/online','https://payments.west.vantivprelive.com/vap/communicator/online');
-        elseif ($cnpEnv == UrlMapper::POSTLIVE)
-            return array('https://payments.vantivpostlive.com/vap/communicator/online', 'https://payments.east.vantivpostlive.com/vap/communicator/online', 'https://payments.west.vantivpostlive.com/vap/communicator/online');
-        elseif ($cnpEnv == UrlMapper::PRODUCTION)
-            return array('https://payments.vantivcnp.com/vap/communicator/online', 'https://payments.east.vantivcnp.com/vap/communicator/online', 'https://payments.west.vantivcnp.com/vap/communicator/online');
-        elseif ($cnpEnv == UrlMapper::TRANSACT_PRODUCTION)
-            return 'https://transact.vantivcnp.com/' . $cnpOnlineCtx;
-        elseif ($cnpEnv == UrlMapper::TRANSACT_PRELIVE)
-            return 'https://transact.vantivprelive.com/' . $cnpOnlineCtx;
-        elseif ($cnpEnv == UrlMapper::TRANSACT_POSTLIVE)
-            return 'https://transact.vantivpostlive.com/' . $cnpOnlineCtx;
+            return array('https://transaction.elementexpress.com');
+        elseif ($cnpEnv == UrlMapper::Express)
+            return array('https://transaction.elementexpress.com');
         else
-            return 'https://www.testvantivcnp.com/sandbox/communicator/online';
+            return 'https://transaction.elementexpress.com';
     }
 }

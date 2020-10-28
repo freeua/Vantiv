@@ -11,12 +11,12 @@ class CommManager
 
     protected $configuration;
     protected $doMultiSite = false;
+    protected $printDebug = false;
     protected $errorCount = 0;
     protected $currentMultiSiteUrlIndex = 0;
     protected $multiSiteThreshold = 5;
     protected $lastSiteSwitchTime = 0;
     protected $maxHoursWithoutSwitch = 48;
-    protected $printDebug = false;
     protected $multiSiteUrls = array();
     protected $legacyUrl = "";
 
@@ -34,10 +34,8 @@ class CommManager
 
     function __construct($config){
         $this->configuration = $config;
-        $this->legacyUrl = $this->configuration['url'];
-        $this->doMultiSite = $this->configuration['multiSite'];
-        $this->printDebug = $this->configuration['printMultiSiteDebug'];
-
+        $this->legacyUrl = $this->configuration['URL'];
+        
         if ($this->doMultiSite === 'true'){
             for ($i = 1; $i <3; $i++){
                 $siteUrl = $this->configuration['multiSiteUrl' . $i];
@@ -60,14 +58,6 @@ class CommManager
                          $this->multiSiteThreshold = $t;
                      }
                  }
-                $maxHours = $this->configuration['maxHoursWithoutSwitch'];
-                if ($maxHours!=null){
-                    $t = $maxHours;
-                    if ($t> 0 && $t<100){
-                        $this->maxHoursWithoutSwitch = $t;
-                    }
-                }
-                $this->lastSiteSwitchTime = intval(microtime(true) * 1000);
             }
         }
 
@@ -138,9 +128,9 @@ class CommManager
         }
 
         $requestTarget = array(
-            'targetUrl'=> $url,
-            'urlIndex'=>$this->currentMultiSiteUrlIndex,
-            'requestTime'=>(int)round(microtime(true) *1000)
+            'targetUrl'   => $url,
+            'urlIndex'    => $this->currentMultiSiteUrlIndex,
+            'requestTime' => (int)round(microtime(true) *1000)
         );
         return $requestTarget;
     }
