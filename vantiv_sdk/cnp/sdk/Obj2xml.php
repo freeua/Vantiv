@@ -36,12 +36,12 @@ class Obj2xml
 		$credentials->addChild('AccountID',$config["AccountID"]);
 		$credentials->addChild('AccountToken',$config["AccountToken"]);
 		$credentials->addChild('AcceptorID',$config["AcceptorID"]);
-	
+
 		$application = $xml->addChild('Application');
 		$application->addChild('ApplicationID',$config["ApplicationID"]);
 		$application->addChild('ApplicationVersion',$config["ApplicationVersion"]);
 		$application->addChild('ApplicationName',$config["ApplicationName"]);
-		
+
 		$transactionSetup = $xml->addChild('TransactionSetup');
 		$transactionSetup->addChild('TransactionSetupMethod',$config["TransactionSetupMethod"]);
 		$transactionSetup->addChild('DeviceInputCode',$config["DeviceInputCode"]);
@@ -51,12 +51,15 @@ class Obj2xml
 		$transactionSetup->addChild('CompanyName',$config["CompanyName"]);
 		$transactionSetup->addChild('AutoReturn',$config["AutoReturn"]);
 		$transactionSetup->addChild('WelcomeMessage',$config["WelcomeMessage"]);
-		$transactionSetup->addChild('ReturnURL',$data['ReturnURL']);
-		
+//        Obj2xml::iterateChildren($data["ReturnURL"],$transactionSetup);
+		$transactionSetup->addChild('ReturnURL',"http://vantiv.loc/");
+		$transactionSetup->addChild('OrderDetails',$data['Transaction']['ReferenceNumber']);
+//		$transactionSetup->addChild('ReturnURL',$data["ReturnURL"]);
+
 		$address = $xml->addChild('Address');
 		$address->addChild('AddressEditAllowed',$config["AddressEditAllowed"]);
 		Obj2xml::iterateChildren($data['Address'], $address);
-		
+
 		$terminal = $xml->addChild('Terminal');
 		$terminal->addChild('TerminalID',$config["TerminalID"]);
 		$terminal->addChild('CardholderPresentCode',$config["CardholderPresentCode"]);
@@ -66,27 +69,25 @@ class Obj2xml
 		$terminal->addChild('CardPresentCode',$config["CardPresentCode"]);
 		$terminal->addChild('MotoECICode',$config["MotoECICode"]);
 		$terminal->addChild('CVVPresenceCode',$config["CVVPresenceCode"]);
-		
+
 		$transaction = $xml->addChild('Transaction');
 		Obj2xml::iterateChildren($data['Transaction'],$transaction);
 		$transaction->addChild('MarketCode', $config["MarketCode"]);
 		$transaction->addChild('DuplicateCheckDisableFlag', $config["DuplicateCheckDisableFlag"]);
-		var_dump($xml->asXML());
+//        echo $data["ReturnURL"];
+//        var_dump($xml->asXML());
+
 		return $xml->asXML();
     }
 
-
-
     private static function iterateChildren($data,$transacType)
     {
-
         foreach ($data as $key => $value) {
             //print $key . " " . $value . "\n";
             if ($value === "REQUIRED") {
                 throw new \InvalidArgumentException("Missing Required Field: /$key/");
             } else{
-				$node = $transacType->addChild($key);
-				Obj2xml::iterateChildren($value,$node);
+                $transacType->addChild($key, $value);
 			}
         }
     }
@@ -97,24 +98,26 @@ class Obj2xml
 
         $ini_file = realpath( dirname( __FILE__ ) ) . '/cnp_SDK_config.ini';
         if ( file_exists( $ini_file ) ) {
-            @$config_array = parse_ini_file( 'cnp_SDK_config.ini' );
+            @$config_array = parse_ini_file('cnp_SDK_config.ini');
         }
 		if ( empty( $config_array ) ) {
 			$config_array = array();
 		}
-	
-		$names = explode( ',', CNP_CONFIG_LIST );
+
+        $names = explode( ',', CNP_CONFIG_LIST );
 		foreach ( $names as $name ) {
             if ( isset($data[ $name ] ) ) {
                 $config[ $name ] = $data[ $name ];
-				
+
             } else {
                 if ( $name == 'AccountID' ) {
                     $config['AccountID'] = $config_array['AccountID'];
-                } elseif ( $name == 'ApplicationVersion' ) {
+                } elseif ( $name == 'AccountToken' ) {
+                    $config['AccountToken'] = isset( $config_array['AccountToken'] ) ? $config_array['AccountToken'] : '';
+                }elseif ( $name == 'ApplicationVersion' ) {
                     $config['ApplicationVersion'] = isset( $config_array['ApplicationVersion'] ) ? $config_array['ApplicationVersion'] : CURRENT_XML_VERSION;
                 } elseif ( $name == 'URL' ) {
-					$config['URL'] = isset( $config_array['URL'] ) ? $config_array['URL'] : CURRENT_XML_VERSION;
+					$config['URL'] = isset( $config_array['URL'] ) ? $config_array['URL'] : '';
 				} else {
                     if ( ( ! isset( $config_array[ $name ] ) ) ) {
                         throw new \InvalidArgumentException( "Missing Field /$name/" );
@@ -123,6 +126,6 @@ class Obj2xml
 				}
             }
         }
-        return $config;
+        return $config_array;
     }
 }

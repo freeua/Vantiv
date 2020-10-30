@@ -28,5 +28,5 @@ define('CURRENT_XML_VERSION', '12.13');
 define('CURRENT_SDK_VERSION', 'PHP;12.13.0');
 define('MAX_TXNS_PER_BATCH', 100000);
 define('MAX_TXNS_PER_REQUEST', 500000);
-define('CNP_CONFIG_LIST', 'AccountID,AccountToken,AcceptorID,ApplicationID,ApplicationVersion,ApplicationName,TerminalID,TerminalCapabilityCode,TerminalEnvironmentCode,CardholderPresentCode,CardInputCode,CardPresentCode,MotoECICode,CVVPresenceCode,URL,TransactionSetupMethod,DeviceInputCode,Device,Embedded,CVVRequired,CompanyName,AutoReturn,WelcomeMessage,AddressEditAllowed,MarketCode,DuplicateCheckDisableFlag');
+define('CNP_CONFIG_LIST', 'AccountID,AccountToken,AcceptorID,ApplicationID,ApplicationVersion,ApplicationName,TerminalID,TerminalCapabilityCode,TerminalEnvironmentCode,CardholderPresentCode,CardInputCode,CardPresentCode,MotoECICode,CVVPresenceCode,URL,TransactionSetupMethod,DeviceInputCode,Device,Embedded,CVVRequired,CompanyName,AutoReturn,WelcomeMessage,AddressEditAllowed,MarketCode,DuplicateCheckDisableFlag,ReturnURL');
 

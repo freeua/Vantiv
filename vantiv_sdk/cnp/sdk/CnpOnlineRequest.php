@@ -36,32 +36,6 @@ class CnpOnlineRequest
         $this->newXML = new CnpXmlMapper();
     }
 
-    /**
-     * @param $code
-     * @return mixed|string
-     */
-    public static function getAddressResponse($code)
-    {
-        $codes = array("00" => "5-Digit zip and address match",
-                       "01" => "9-Digit zip and address match",
-                       "02" => "Postal code and address match",
-                       "10" => "5-Digit zip matches, address does not match",
-                       "11" => "9-Digit zip matches, address does not match",
-                       "12" => "Zip does not match, address matches",
-                       "13" => "Postal code does not match, address matches",
-                       "14" => "Postal code matches, address not verified",
-                       "20" => "Neither zip nor address match",
-                       "30" => "AVS service not supported by issuer",
-                       "31" => "AVS system not available",
-                       "32" => "Address unavailable",
-                       "33" => "General error",
-                       "34" => "AVS not performed",
-                       "40" => "Address failed Vantiv eCommerce Inc. edit checks");
-
-        return (isset($codes[$code]) ? $codes[$code] : "Unknown Address Response");
-    }
-
-
 
     /**
      * @param $hash_in
@@ -129,16 +103,8 @@ class CnpOnlineRequest
     public function saleRequest($hash_in)
     {
         $hash_out = array(
-            'cnpTxnId' => XmlFields::returnArrayValue($hash_in,'cnpTxnId'),
-            'orderId' =>(XmlFields::returnArrayValue($hash_in,'orderId')),
             'ReturnURL' =>(XmlFields::returnArrayValue($hash_in,'ReturnURL')),
-            'amount' =>(XmlFields::returnArrayValue($hash_in,'amount')),
-        	'id'=>XmlFields::returnArrayValue($hash_in,'id'),
-            'secondaryAmount'=>XmlFields::returnArrayValue($hash_in,'secondaryAmount'),
-            'surchargeAmount' =>XmlFields::returnArrayValue($hash_in,'surchargeAmount'),
-            'orderSource'=>(XmlFields::returnArrayValue($hash_in,'orderSource')),
             'Address'=>XmlFields::addressType(XmlFields::returnArrayValue($hash_in,'Address')),
-            'shipToAddress'=>XmlFields::contact(XmlFields::returnArrayValue($hash_in,'shipToAddress')),
 			'Transaction'=> XmlFields::transactionType(XmlFields::returnArrayValue($hash_in,'Transaction'))
         );
 

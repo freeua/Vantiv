@@ -37,30 +37,6 @@ class XmlFields
         return $retVal;
     }
 
-    public static function contact($hash_in)
-    {
-        if (isset($hash_in)) {
-            $hash_out = array(
-                        "name"=>XmlFields::returnArrayValue($hash_in, "name", 100),
-                        "firstName" =>XmlFields::returnArrayValue($hash_in, "firstName", 25),
-                        "middleInitial"=>XmlFields::returnArrayValue($hash_in, "middleInitial", 1),
-                        "lastName"=>XmlFields::returnArrayValue($hash_in, "lastName", 25),
-                        "companyName"=>XmlFields::returnArrayValue($hash_in, "companyName", 40),
-                        "addressLine1"=>XmlFields::returnArrayValue($hash_in, "addressLine1", 35),
-                        "addressLine2"=>XmlFields::returnArrayValue($hash_in, "addressLine2", 35),
-                        "addressLine3"=>XmlFields::returnArrayValue($hash_in, "addressLine3", 35),
-                        "city"=>XmlFields::returnArrayValue($hash_in, "city", 35),
-                        "state"=>XmlFields::returnArrayValue($hash_in, "state", 30),
-                        "zip"=>XmlFields::returnArrayValue($hash_in, "zip", 20),
-                        "country"=>XmlFields::returnArrayValue($hash_in, "country", 3),
-                        "email"=>XmlFields::returnArrayValue($hash_in, "email", 100),
-                        "phone"=>XmlFields::returnArrayValue($hash_in, "phone", 20)
-            );
-
-            return $hash_out;
-        }
-
-    }
     public static function addressType($hash_in)
     {
         if (isset($hash_in)) {
@@ -69,8 +45,8 @@ class XmlFields
 				"BillingName"=>XmlFields::returnArrayValue($hash_in, "BillingName", 100),
 				"BillingAddress1"=>XmlFields::returnArrayValue($hash_in, "BillingAddress1", 35),
 				"BillingCity"=>XmlFields::returnArrayValue($hash_in, "BillingCity", 35),
-				"BillingState"=>XmlFields::returnArrayValue($hash_in, "BillingState", 30),
-				"BillingCountry"=>XmlFields::returnArrayValue($hash_in, "BillingCountry", 3)
+				"BillingState"=>XmlFields::returnArrayValue($hash_in, "BillingState", 30)
+//				"BillingCountry"=>XmlFields::returnArrayValue($hash_in, "BillingCountry", 3)
             );
 
             return $hash_out;

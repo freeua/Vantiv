@@ -25,7 +25,7 @@ if ( ! class_exists('WC_Gateway_Vantiv') ) {
             $this->liveurl            = 'https://certtransaction.hostedpayments.com/';
             $this->msg['message']     = "";
             $this->msg['class']       = "";
-			$this->order_button_text = __('Proceed to Vantiv', 'woocommerce');
+			$this->order_button_text  = __('Proceed to Vantiv', 'woocommerce');
 
             add_action('init', array( &$this, 'check_vantiv_response' ));
             if ( version_compare(WOOCOMMERCE_VERSION, '2.0.0', '>=') ) {
@@ -438,6 +438,9 @@ if ( ! class_exists('WC_Gateway_Vantiv') ) {
          * Process the payment and return the result
         **/
         function process_payment ( $order_id ) {
+//            ini_set('display_errors', 1);
+//            ini_set('display_startup_errors', 1);
+//            error_reporting(E_ALL);
             global $woocommerce;
             $order = new WC_Order( $order_id );
             $sale_info = array(
@@ -448,132 +451,44 @@ if ( ! class_exists('WC_Gateway_Vantiv') ) {
                     'BillingAddress1'     => $order->billing_address_1,
                     'BillingCity'         => $order->billing_city,
                     'BillingState'        => $order->billing_state,
-                    'BillingCountry'      => $order->billing_country,
+//                    'BillingCountry'      => $order->billing_country,
                 ),
                 'Transaction'   => array(
-                    'TransactionAmount' => str_replace( array( '.', '' ), '', $order->order_total ),
+                    'TransactionAmount' => ($order->order_total),
                     'ReferenceNumber'   => $order_id,
                 )
             );
 
             $initialize = new CnpOnlineRequest();
             $saleResponse = $initialize->saleRequest( $sale_info );
-            var_dump($saleResponse);
-            die();
-//            if ( XmlParser::getNode( $saleResponse, 'message' ) != 'Approved' )
-//                throw new \Exception( 'CnpSaleTransaction does not get the right response' );
-//
-//            // 1 or 4 means the transaction was a success
-//            if ( XmlParser::getNode( $saleResponse, 'message' ) == 'Approved' ) {
-//                // Payment successful
-//                $order->add_order_note( __( 'Vantiv complete payment.', 'gateway-vantiv-woocommerce' ) );
-//
-//                // paid order marked
-//                $order->payment_complete();
-//                // this is important part for empty cart
-//                $woocommerce->cart->empty_cart();
-//                // Redirect to thank you page
-//                return array(
-//				'result'   => 'success',
-//				'redirect' => $redirect_url,
-//			);
-//            } else {
-//                //transiction fail
-//                wc_add_notice( XmlParser::getNode( $saleResponse, 'message' ), 'error' );
-//                $order->add_order_note( 'Error: ' . XmlParser::getNode( $saleResponse, 'message' ) );
-//            }
+
+//            var_dump(XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ));
+//            var_dump($saleResponse);
+//            die();
+            if ( XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ) != 'Success' )
+                throw new \Exception( 'CnpSaleTransaction does not get the right response' );
+
+            // 1 or 4 means the transaction was a success
+            if ( XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ) == 'Success' ) {
+                // Payment successful
+                $order->add_order_note( __( 'Vantiv complete payment.', 'gateway-vantiv-woocommerce' ) );
+
+                // paid order marked
+                $order->payment_complete();
+                // this is important part for empty cart
+                $woocommerce->cart->empty_cart();
+                // Redirect to thank you page
+                $redirect_url = 'https://certtransaction.hostedpayments.com/?TransactionSetupID=' . XmlParser::getNode( $saleResponse, 'TransactionSetupID' );
+                return array(
+                    'result'   => 'success',
+                    'redirect' => $redirect_url,
+                );
+            } else {
+                //transiction fail
+                wc_add_notice( XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ), 'error' );
+                $order->add_order_note( 'Error: ' . XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ) );
+            }
         }
-//        function process_payment( $order_id )
-//        {
-//			$url = "https://certtransaction.elementexpress.com";
-//			$input_xml ='<TransactionSetup xmlns="https://transaction.elementexpress.com">
-//                <Credentials>
-//                    <AccountID>1062601</AccountID>
-//                    <AccountToken>067241B3DBCF804AEC36CFF3446A3DDCB31F586152AFFA8059F6520AC288A2B7C040C901</AccountToken>
-//                    <AcceptorID>874767542</AcceptorID>
-//                </Credentials>
-//                <Application>
-//                    <ApplicationID>10871</ApplicationID>
-//                    <ApplicationName>XML</ApplicationName>
-//                    <ApplicationVersion>1.1.1</ApplicationVersion>
-//                </Application>
-//                <TransactionSetup>
-//                    <TransactionSetupMethod>1</TransactionSetupMethod>
-//                    <DeviceInputCode>0</DeviceInputCode>
-//                    <Device>0</Device>
-//                    <Embedded>0</Embedded>
-//                    <CVVRequired>1</CVVRequired>
-//                    <CompanyName></CompanyName>
-//                    <AutoReturn>1</AutoReturn>
-//                    <WelcomeMessage></WelcomeMessage>
-//                    <ReturnURL>http://vantiv.loc/checkout/</ReturnURL>
-//                </TransactionSetup>
-//                <Address>
-//                    <AddressEditAllowed>0</AddressEditAllowed>
-//                    <BillingZipcode>81301</BillingZipcode>
-//                    <BillingName>Liv</BillingName>
-//                    <BillingAddress1>123 Test Street</BillingAddress1>
-//                    <BillingCity>Durango</BillingCity>
-//                    <BillingState>Colorado</BillingState>
-//                </Address>
-//                <Transaction>
-//                    <TransactionAmount>1.50</TransactionAmount>
-//                    <MarketCode>3</MarketCode>
-//                    <ReferenceNumber>887766</ReferenceNumber>
-//                    <DuplicateCheckDisableFlag>1</DuplicateCheckDisableFlag>
-//                </Transaction>
-//                <Terminal>
-//                    <TerminalID>01</TerminalID>
-//                    <CVVPresenceCode>2</CVVPresenceCode>
-//                    <CardPresentCode>2</CardPresentCode>
-//                    <CardholderPresentCode>7</CardholderPresentCode>
-//                    <CardInputCode>4</CardInputCode>
-//                    <TerminalCapabilityCode>6</TerminalCapabilityCode>
-//                    <TerminalEnvironmentCode>6</TerminalEnvironmentCode>
-//                    <MotoECICode>1</MotoECICode>
-//                </Terminal>
-//            </TransactionSetup>';
-//			$ch = curl_init();
-//			curl_setopt($ch, CURLOPT_URL, $url);
-//			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-//			curl_setopt($ch, CURLOPT_POST, 1);
-//			curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: text/xml'));
-//			curl_setopt($ch, CURLOPT_POSTFIELDS,$input_xml);
-//			curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
-//
-//			$server_output = curl_exec($ch);
-//
-//			curl_close($ch);
-//	        $xml_parse = simplexml_load_string($server_output);
-//			$xml = $this->xml2array($xml_parse);
-//			$redirect_url = 'https://certtransaction.hostedpayments.com/?TransactionSetupID=' . $xml['Response'][0]['TransactionSetup'][0]['TransactionSetupID'];
-//			return array(
-//				'result'   => 'success',
-//				'redirect' => $redirect_url,
-//			);
-//
-//
-//        }
-		public function xml2array($xml){
-			ini_set('display_errors', '1');
-			ini_set('display_startup_errors', '1');
-			error_reporting(E_ALL);
-			$arr = array();
-			
-			foreach ($xml->children() as $r)
-			{
-				$t = array();
-				if(count($r->children()) == 0)
-				{
-					$arr[$r->getName()] = strval($r);
-				}
-				else
-				{
-					$arr[$r->getName()][] = $this->xml2array($r);
-				}
-			}
-			return $arr;
-		}
 
         public function validate_fields ()
         {
@@ -585,6 +500,23 @@ if ( ! class_exists('WC_Gateway_Vantiv') ) {
         function check_vantiv_response ()
         {
             global $woocommerce;
+//            HostedPaymentStatus=Complete&
+//            TransactionSetupID=50B9D0D5-FCE8-4DE4-B104-B2C0FAD96BF9&
+//            TransactionID=64472707&
+//            ExpressResponseCode=0&
+//            ExpressResponseMessage=Approved&
+//            CVVResponseCode=P&
+//            ApprovalNumber=71632A
+//            &LastFour=0076&
+//            ValidationCode=637FBF528A454262&
+//            CardLogo=Visa&
+//            ApprovedAmount=1.00&
+//            BillingAddress1=1+Main+St.&
+//            BillingZipcode=01803-3747&
+//            Bin=476173&
+//            Entry=Manual&
+//            NetTranID=000303563439789&
+//            TranDT=2020-10-29%2010:39:03
 //            var_dump($_REQUEST);
 //            if ( isset($_REQUEST['txnid']) && isset($_REQUEST['mihpayid']) ) {
 //                $order_id_time = ( isset($_REQUEST['txnid']) ) ?  sanitize_text_field($_REQUEST['txnid'])  : '';
