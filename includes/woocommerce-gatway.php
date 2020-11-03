@@ -543,11 +543,12 @@ if ( ! defined('ABSPATH') ) {
 			{
 				$config_array = null;
 				
-				$ini_file = realpath(dirname(__DIR__)) . '/../vantiv_sdk/cnp/sdk/cnp_SDK_config.ini';
-				if (file_exists($ini_file)) {
-					@$config_array = parse_ini_file('cnp_SDK_config.ini');
-				}
-				if (empty($config_array)) {
+				$ini_file = realpath(dirname(__DIR__)) . '/vantiv_sdk/cnp/sdk/cnp_SDK_config.ini';
+                if (file_exists($ini_file)) {
+                    @$config_array = parse_ini_file($ini_file);
+                }
+
+                if (empty($config_array)) {
 					$config_array = array();
 				}
 				return $config_array;
@@ -571,32 +572,29 @@ if ( ! defined('ABSPATH') ) {
 				$config = $this->getConfig();
 				$initialize = new CnpOnlineRequest();
 				$result = $initialize->refund_transaction($order, $amount, $reason, $config);
-				$order->add_order_note(
-					// translators: 1: Refund amount, 2: Refund ID
-					sprintf(__('Refunded %1$s - Refund ID: %2$s', 'woocommerce'), '1.00', '123') // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-				);
-				var_dump($result);
-				update_option('result_refund', $result);
-				die;
-//                XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' )
+
+                $responseMessage = XmlParser::getNode( $result, 'ExpressResponseMessage' );
+//				var_dump($order_id);
+//				var_dump($responseMessage);
+//				var_dump($result);
+//				die;
 //				if (is_wp_error($result)) {
 //
 //					return new WP_Error('error', $result->get_error_message());
 //				}
-//
-//				switch (strtolower($result->ACK)) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-//					case 'success':
-//					case 'successwithwarning':
-//						$order->add_order_note(
-//						// translators: 1: Refund amount, 2: Refund ID
-//							sprintf(__('Refunded %1$s - Refund ID: %2$s', 'woocommerce'), $result->GROSSREFUNDAMT, $result->REFUNDTRANSACTIONID) // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-//						);
-//						return true;
-//				}
-//
-//				return isset($result->L_LONGMESSAGE0) ? new WP_Error('error', $result->L_LONGMESSAGE0) : false; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-					return true;
-				}//end process_refund()
+                if ($responseMessage == 'Approved' || $responseMessage == 'Approve' || $responseMessage == 'Duplicate') {
+                    $order->update_meta_data( '_vantiv_refund_id', 'TransactionID' );
+                    $order->update_meta_data( '_vantiv_refund_id', 'TransactionID' );
+                    $order->add_order_note(
+                    // translators: 1: Refund amount, 2: Refund ID
+                        sprintf(__('Refunded %1$s - Refund ID: %2$s', 'woocommerce'), '1.00', '123') // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+                    );
+                    return true;
+                } else{
+                    return false;
+                }
+
+			}//end process_refund()
 				
 				/**
 				 * Capture payment when the order is changed from on-hold to complete or processing
@@ -648,19 +646,19 @@ if ( ! defined('ABSPATH') ) {
 			 * @version 4.2.2
 			 * @param  int $order_id
 			 */
-			public function cancel_payment( $order_id ) {
-				$order = wc_get_order( $order_id );
-				
-				if ( 'vantiv' === $order->get_payment_method() ) {
-					$captured = 'yes';
-					if ( 'no' === $captured ) {
-						$this->process_refund( $order_id );
-					}
-					
-					// This hook fires when admin manually changes order status to cancel.
-//					do_action( 'woocommerce_stripe_process_manual_cancel', $order );
-				}
-			}
+//			public function cancel_payment( $order_id ) {
+//				$order = wc_get_order( $order_id );
+//
+//				if ( 'vantiv' === $order->get_payment_method() ) {
+//					$captured = 'yes';
+//					if ( 'no' === $captured ) {
+//						$this->process_refund( $order_id );
+//					}
+//
+//					// This hook fires when admin manually changes order status to cancel.
+////					do_action( 'woocommerce_stripe_process_manual_cancel', $order );
+//				}
+//			}
 			
 			/**
 			 * Process webhook refund.
@@ -669,62 +667,62 @@ if ( ! defined('ABSPATH') ) {
 			 * @version 4.0.0
 			 * @param object $notification
 			 */
-			public function process_webhook_refund( $notification ) {
-				$order = WC_Stripe_Helper::get_order_by_charge_id( $notification->data->object->id );
-				
-				if ( ! $order ) {
-					WC_Stripe_Logger::log( 'Could not find order via charge ID: ' . $notification->data->object->id );
-					return;
-				}
-				
-				$order_id = $order->get_id();
-				
-				if ( 'stripe' === $order->get_payment_method() ) {
-					$charge    = $order->get_transaction_id();
-					$captured  = $order->get_meta( '_stripe_charge_captured', true );
-					$refund_id = $order->get_meta( '_stripe_refund_id', true );
-					
-					// If the refund ID matches, don't continue to prevent double refunding.
-					if ( $notification->data->object->refunds->data[0]->id === $refund_id ) {
-						return;
-					}
-					
-					// Only refund captured charge.
-					if ( $charge ) {
-						$reason = ( isset( $captured ) && 'yes' === $captured ) ? __( 'Refunded via Stripe Dashboard', 'woocommerce-gateway-stripe' ) : __( 'Pre-Authorization Released via Stripe Dashboard', 'woocommerce-gateway-stripe' );
-						
-						// Create the refund.
-						$refund = wc_create_refund(
-							array(
-								'order_id' => $order_id,
-								'amount'   => $this->get_refund_amount( $notification ),
-								'reason'   => $reason,
-							)
-						);
-						
-						if ( is_wp_error( $refund ) ) {
-							WC_Stripe_Logger::log( $refund->get_error_message() );
-						}
-						
-						$order->update_meta_data( '_stripe_refund_id', $notification->data->object->refunds->data[0]->id );
-						
-						$amount = wc_price( $notification->data->object->refunds->data[0]->amount / 100 );
-						
-						if ( in_array( strtolower( $order->get_currency() ), WC_Stripe_Helper::no_decimal_currencies() ) ) {
-							$amount = wc_price( $notification->data->object->refunds->data[0]->amount );
-						}
-						
-						if ( isset( $notification->data->object->refunds->data[0]->balance_transaction ) ) {
-							$this->update_fees( $order, $notification->data->object->refunds->data[0]->balance_transaction );
-						}
-						
-						/* translators: 1) dollar amount 2) transaction id 3) refund message */
-						$refund_message = ( isset( $captured ) && 'yes' === $captured ) ? sprintf( __( 'Refunded %1$s - Refund ID: %2$s - %3$s', 'woocommerce-gateway-stripe' ), $amount, $notification->data->object->refunds->data[0]->id, $reason ) : __( 'Pre-Authorization Released via Stripe Dashboard', 'woocommerce-gateway-stripe' );
-						
-						$order->add_order_note( $refund_message );
-					}
-				}
-			}
+//			public function process_webhook_refund( $notification ) {
+//				$order = WC_Stripe_Helper::get_order_by_charge_id( $notification->data->object->id );
+//
+//				if ( ! $order ) {
+//					WC_Stripe_Logger::log( 'Could not find order via charge ID: ' . $notification->data->object->id );
+//					return;
+//				}
+//
+//				$order_id = $order->get_id();
+//
+//				if ( 'stripe' === $order->get_payment_method() ) {
+//					$charge    = $order->get_transaction_id();
+//					$captured  = $order->get_meta( '_stripe_charge_captured', true );
+//					$refund_id = $order->get_meta( '_stripe_refund_id', true );
+//
+//					// If the refund ID matches, don't continue to prevent double refunding.
+//					if ( $notification->data->object->refunds->data[0]->id === $refund_id ) {
+//						return;
+//					}
+//
+//					// Only refund captured charge.
+//					if ( $charge ) {
+//						$reason = ( isset( $captured ) && 'yes' === $captured ) ? __( 'Refunded via Stripe Dashboard', 'woocommerce-gateway-stripe' ) : __( 'Pre-Authorization Released via Stripe Dashboard', 'woocommerce-gateway-stripe' );
+//
+//						// Create the refund.
+//						$refund = wc_create_refund(
+//							array(
+//								'order_id' => $order_id,
+//								'amount'   => $this->get_refund_amount( $notification ),
+//								'reason'   => $reason,
+//							)
+//						);
+//
+//						if ( is_wp_error( $refund ) ) {
+//							WC_Stripe_Logger::log( $refund->get_error_message() );
+//						}
+//
+//						$order->update_meta_data( '_stripe_refund_id', $notification->data->object->refunds->data[0]->id );
+//
+//						$amount = wc_price( $notification->data->object->refunds->data[0]->amount / 100 );
+//
+//						if ( in_array( strtolower( $order->get_currency() ), WC_Stripe_Helper::no_decimal_currencies() ) ) {
+//							$amount = wc_price( $notification->data->object->refunds->data[0]->amount );
+//						}
+//
+//						if ( isset( $notification->data->object->refunds->data[0]->balance_transaction ) ) {
+//							$this->update_fees( $order, $notification->data->object->refunds->data[0]->balance_transaction );
+//						}
+//
+//						/* translators: 1) dollar amount 2) transaction id 3) refund message */
+//						$refund_message = ( isset( $captured ) && 'yes' === $captured ) ? sprintf( __( 'Refunded %1$s - Refund ID: %2$s - %3$s', 'woocommerce-gateway-stripe' ), $amount, $notification->data->object->refunds->data[0]->id, $reason ) : __( 'Pre-Authorization Released via Stripe Dashboard', 'woocommerce-gateway-stripe' );
+//
+//						$order->add_order_note( $refund_message );
+//					}
+//				}
+//			}
 			
 		}
 			
