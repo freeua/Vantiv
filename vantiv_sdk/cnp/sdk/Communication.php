@@ -29,9 +29,6 @@ class Communication
     {
         $config = Obj2xml::getConfig($hash_config);
 
-        if ((int) $config['print_xml']) {
-            echo $req;
-        }
         $ch = curl_init();
         
         $commManager = CommManager::instance($config);
@@ -61,9 +58,7 @@ class Communication
             throw new \Exception (curl_error($ch));
         } else {
             curl_close($ch);
-            if ((int) $config['print_xml']) {
-                echo $output;
-            }
+
             $commManager->reportResult($requestTarget,CommManager::$REQUEST_RESULT_RESPONSE_RECEIVED,$responseCode);
             return $output;
         }

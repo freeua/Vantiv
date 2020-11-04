@@ -49,9 +49,8 @@ class CnpOnlineRequest
 			'Transaction'=> XmlFields::transactionType(XmlFields::returnArrayValue($hash_in,'Transaction'))
         );
 
-        $choice_hash = array($hash_out['Transaction'],$hash_out['paypal'],$hash_out['token'],$hash_out['paypage'],$hash_out['applepay'],$hash_out['mpos']);
-        $choice2_hash= array($hash_out['fraudCheck'],$hash_out['cardholderAuthentication']);
-        $saleResponse = $this->processRequest($hash_out,$hash_in,'sale',$choice_hash,$choice2_hash);
+        $choice_hash = array($hash_out['Transaction'],$hash_out['Address'],$hash_out['ReturnURL']);
+        $saleResponse = $this->processRequest($hash_out,$hash_in,'sale',$choice_hash);
 
         return $saleResponse;
     }
@@ -118,17 +117,25 @@ class CnpOnlineRequest
      * @param $hash_in
      * @param $type
      * @param null $choice1
-     * @param null $choice2
      * @return \DOMDocument|\SimpleXMLElement
      * @throws exceptions\cnpSDKException
      */
-    private function processRequest($hash_out, $hash_in, $type, $choice1 = null, $choice2 = null)
+    private function processRequest($hash_out, $hash_in, $type, $choice1 = null)
     {
         $hash_config = CnpOnlineRequest::overrideConfig($hash_in);
         $hash = CnpOnlineRequest::getOptionalAttributes($hash_in,$hash_out);
         $request = Obj2xml::toXml($hash,$hash_config, $type);
 
 		$cnpOnlineResponse = $this->newXML->request($request,$hash_config,$this->useSimpleXml);
+
+        return $cnpOnlineResponse;
+    }
+
+    public function do_capture ( $order, $config ) {
+
+        $request = Obj2xml::toXml( $order, $config, $type );
+
+        $cnpOnlineResponse = $this->newXML->request( $request, $config, $this->useSimpleXml );
 
         return $cnpOnlineResponse;
     }

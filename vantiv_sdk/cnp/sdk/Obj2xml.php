@@ -72,11 +72,13 @@ class Obj2xml
 		$terminal->addChild('CVVPresenceCode',$config["CVVPresenceCode"]);
 
 		$transaction = $xml->addChild('Transaction');
-		Obj2xml::iterateChildren($data['Transaction'],$transaction);
+//		Obj2xml::iterateChildren($data['Transaction'],$transaction);
 		$transaction->addChild('MarketCode', $config["MarketCode"]);
+		$transaction->addChild('TransactionAmount', $data['Transaction']['TransactionAmount']);
+		$transaction->addChild('ReferenceNumber', $data['Transaction']['ReferenceNumber']);
 		$transaction->addChild('DuplicateCheckDisableFlag', $config["DuplicateCheckDisableFlag"]);
 //        echo $data["ReturnURL"];
-//        var_dump($xml->asXML());
+        var_dump($xml->asXML());
 
 		return $xml->asXML();
     }

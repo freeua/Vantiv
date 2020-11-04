@@ -18,18 +18,17 @@ if ( ! defined('ABSPATH') ) {
 				$this->init_form_fields();
 				$this->init_settings();
 				$this->title              = $this->settings['title'];
-				$this->testmode           = 'yes' === $this->get_option('sandbox');
-				$this->description        = $this->get_option('description');
+				$this->testmode           = 'yes' === $this->get_option( 'sandbox' );
+				$this->description        = $this->get_option( 'description' );
 				$this->method_description = 'Vantiv works by adding payment fields on the checkout and then sending the details to Vantiv.';
 				$this->liveurl            = 'https://certtransaction.hostedpayments.com/';
 				$this->msg['message']     = "";
 				$this->msg['class']       = "";
-				$this->order_button_text  = __('Proceed to Vantiv', 'woocommerce');
+				$this->order_button_text  = __( 'Proceed to Vantiv', 'woocommerce' );
 				$this->supports           = array(
 					'products',
 					'refunds',
 					'tokenization',
-					'add_payment_method',
 					'subscriptions',
 					'subscription_cancellation',
 					'subscription_suspension',
@@ -39,20 +38,18 @@ if ( ! defined('ABSPATH') ) {
 					'subscription_payment_method_change',
 					'subscription_payment_method_change_customer',
 					'subscription_payment_method_change_admin',
-					'multiple_subscriptions',
-					'pre-orders',
 				);
 				
-				if (version_compare(WOOCOMMERCE_VERSION, '2.0.0', '>=')) {
-					add_action('woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'save_payment_gateway_settings'));
+				if ( version_compare( WOOCOMMERCE_VERSION, '2.0.0', '>=' ) ) {
+					add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array($this, 'save_payment_gateway_settings' ) );
 				} else {
-					add_action('woocommerce_update_options_payment_gateways', array($this, 'save_payment_gateway_settings'));
+					add_action( 'woocommerce_update_options_payment_gateways', array( $this, 'save_payment_gateway_settings' ) );
 				}
-				add_action('woocommerce_receipt_vantiv', array($this, 'receipt_page'));
+				add_action( 'woocommerce_receipt_vantiv', array( $this, 'receipt_page' ) );
 				
 				add_action( 'woocommerce_order_status_processing', array( $this, 'capture_payment' ) );
 				add_action( 'woocommerce_order_status_completed', array( $this, 'capture_payment' ) );
-				add_action('woocommerce_api_wc_gateway_vantiv', array($this, 'check_ipn_response'));
+				add_action( 'woocommerce_api_wc_gateway_vantiv', array( $this, 'check_ipn_response' ) );
 				add_action( 'woocommerce_order_status_cancelled', array( $this, 'cancel_payment' ) );
 				add_action( 'woocommerce_order_status_refunded', array( $this, 'cancel_payment' ) );
 				
@@ -292,7 +289,7 @@ if ( ! defined('ABSPATH') ) {
 				return update_option($this->get_option_key(), apply_filters('woocommerce_settings_api_sanitized_fields_' . $this->id, $this->settings), 'yes');
 			}
 			
-			public function writeConfigPaymentSettings($line, $handle)
+			public function writeConfigPaymentSettings( $line, $handle )
 			{
 				foreach ($line as $keys => $values) {
 					fwrite($handle, $keys . '');
@@ -336,10 +333,13 @@ if ( ! defined('ABSPATH') ) {
 			/**
 			 * Process the payment and return the result
 			 **/
-			function process_payment($order_id)
+			function process_payment( $order_id )
 			{
-				
 				$order = new WC_Order($order_id);
+
+//                if ($_GET['pay_for_order'] === 'true') {
+//                    echo $this->generate_form( $order );
+//                }
 				return array(
 					'result' => 'success',
 					'redirect' => add_query_arg('order', $order->get_id(), add_query_arg('key', $order->order_key, get_permalink(wc_get_page_id('pay'))))
@@ -352,120 +352,108 @@ if ( ! defined('ABSPATH') ) {
 			/**
 			 * Receipt Page
 			 **/
-			function receipt_page($order)
+			function receipt_page( $order )
 			{
-				echo '<p>' . __('Thank you for your order, please click the button below to pay with Vantiv.', 'vantiv') . '</p>';
-				echo $this->generate_form($order);
+				echo '<p>' . __( 'Thank you for your order, please click the button below to pay with Vantiv.', 'vantiv' ) . '</p>';
+				echo $this->generate_form( $order );
 			}
 			
-			public function generate_form($order_id)
+			public function generate_form( $order_id )
 			{
-				
+
 				global $woocommerce;
-				
+
 				$order = new WC_Order($order_id);
-				
-				if (trim($this->redirect_page) == '') {
-					$redirect_page_url = $order->get_checkout_order_received_url();
-				} else {
-					$redirect_page_url = trim($this->redirect_page);
-				}
-				
-				$result_url = add_query_arg('wc-api', 'wc_gateway_vantiv', home_url('/checkout/order-received/' . $order_id));
-				$html = $this->cnb_form(array(
+
+				$result_url = add_query_arg( 'wc-api', 'wc_gateway_vantiv', home_url( '/checkout/order-received/' . $order->get_id() ) );
+				$html = $this->cnb_form( array(
 					'ReturnURL' => $result_url,
 					'Address' => array(
-						'BillingZipcode' => $order->billing_postcode,
-						'BillingName' => $order->billing_first_name . ' ' . $order->billing_last_name,
-						'BillingAddress1' => $order->billing_address_1,
-						'BillingCity' => $order->billing_city,
-						'BillingState' => $order->billing_state,
+						'BillingZipcode' => $order->get_billing_postcode(),
+						'BillingName' => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+						'BillingAddress1' => $order->get_billing_address_1(),
+						'BillingCity' => $order->get_billing_city(),
+						'BillingState' => $order->get_billing_state(),
 //                    'BillingCountry'      => $order->billing_country,
 					),
 					'Transaction' => array(
-						'TransactionAmount' => ($order->order_total),
-						'ReferenceNumber' => $order_id,
+						'TransactionAmount' => $order->get_total(),
+						'ReferenceNumber' => $order->get_id(),
 					)
-				));
+				) );
 				return $html;
 			}
 			
-			public function cnb_form($params)
+			public function cnb_form ( $params )
 			{
 				
 				$initialize = new CnpOnlineRequest();
-				$saleResponse = $initialize->saleRequest($params);
-
-//            var_dump($saleResponse);
-//            die();
-				if (XmlParser::getNode($saleResponse, 'ExpressResponseMessage') != 'Success')
-					throw new \Exception('CnpSaleTransaction does not get the right response');
+				$saleResponse = $initialize->saleRequest( $params );
+                var_dump($saleResponse);
+				if ( XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ) != 'Success' )
+					throw new \Exception( 'Hosted Payment Transaction does not get the right response' );
 				
 				// 1 or 4 means the transaction was a success
-				if (XmlParser::getNode($saleResponse, 'ExpressResponseMessage') == 'Success') {
+				if ( XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ) == 'Success' ) {
 					
 					// Redirect to hostedpayments page
-					$redirect_url = 'https://certtransaction.hostedpayments.com/?TransactionSetupID=' . XmlParser::getNode($saleResponse, 'TransactionSetupID');
-					wp_redirect($redirect_url);
+					$redirect_url = 'https://certtransaction.hostedpayments.com/?TransactionSetupID=' . XmlParser::getNode( $saleResponse, 'TransactionSetupID' );
+					wp_redirect( $redirect_url );
 				} else {
 					//transiction fail
-					wc_add_notice(XmlParser::getNode($saleResponse, 'ExpressResponseMessage'), 'error');
-//					$order->add_order_note( 'Error: ' . XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ) );
+					wc_add_notice( XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ), 'error' );
 				}
 				return '';
 			}
 			
 			function check_ipn_response()
 			{
-//				var_dump('test');
-//				var_dump($_GET);
-//				var_dump($_POST);
 				global $woocommerce;
-				if (isset($_GET['TransactionSetupID'])) {
+				if ( isset( $_GET['TransactionSetupID'] ) ) {
 					$url = $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
-					$template_name = strpos($url, '/order-received/') === false ? '/view-order/' : '/order-received/';
-					if (strpos($url, $template_name) !== false) {
-						$start = strpos($url, $template_name);
-						$first_part = substr($url, $start + strlen($template_name));
-						$order_id = substr($first_part, 0, strpos($first_part, '?'));
+					$template_name = strpos( $url, '/order-received/' ) === false ? '/view-order/' : '/order-received/';
+					if ( strpos( $url, $template_name ) !== false ) {
+						$start = strpos( $url, $template_name );
+						$first_part = substr( $url, $start + strlen( $template_name ) );
+						$order_id = substr( $first_part, 0, strpos( $first_part, '?' ) );
 					}
 					if ($order_id != '') {
 						try {
-							$order = new WC_Order($order_id);
-							$responseMessage = (isset($_GET['ExpressResponseMessage'])) ? sanitize_text_field($_GET['ExpressResponseMessage']) : '';
-							$transactionId = (isset($_GET['TransactionID'])) ? sanitize_text_field($_GET['TransactionID']) : '';
-							$transactionSetupId = (isset($_GET['TransactionSetupID'])) ? sanitize_text_field($_GET['TransactionSetupID']) : '';
-							$transactionResponseMessage = (isset($_GET['ExpressResponseMessage'])) ? sanitize_text_field($_GET['ExpressResponseMessage']) : '';
-							$status = (isset($_GET['HostedPaymentStatus'])) ? sanitize_text_field($_GET['HostedPaymentStatus']) : '';
+							$order = new WC_Order( $order_id );
+							$responseMessage = ( isset( $_GET['ExpressResponseMessage'] ) ) ? sanitize_text_field( $_GET['ExpressResponseMessage'] ) : '';
+							$transactionId = ( isset( $_GET['TransactionID'] ) ) ? sanitize_text_field( $_GET['TransactionID'] ) : '';
+							$transactionSetupId = ( isset( $_GET['TransactionSetupID'] ) ) ? sanitize_text_field( $_GET['TransactionSetupID'] ) : '';
+							$transactionResponseMessage = ( isset( $_GET['ExpressResponseMessage'] ) ) ? sanitize_text_field( $_GET['ExpressResponseMessage'] ) : '';
+							$status = ( isset( $_GET['HostedPaymentStatus'] ) ) ? sanitize_text_field( $_GET['HostedPaymentStatus'] ) : '';
 							$order_status = $order->get_status();
-							if ($order_status !== 'completed') {
-								if ($responseMessage == 'Approved') {
-									$status = strtolower($status);
-									if ($status == "complete") {
+							if ( $order_status !== 'completed' ) {
+								if ( $responseMessage == 'Approved' ) {
+									$status = strtolower( $status );
+									if ( $status == "complete" ) {
 										$transauthorised = true;
 										$this->msg['message'] = "Thank you for shopping with us. Your account has been charged and your transaction is successful. We will be shipping your order to you soon.";
 										$this->msg['class'] = 'woocommerce_message';
-										if ($order_status == 'processing') {
+										if ( $order_status == 'processing' ) {
 										} else {
-											$order->payment_complete($transactionId);
-											update_post_meta($order_id, '_transaction_setup_id', $transactionSetupId);
-											$order->add_order_note('Vantiv payment successful<br/>Unnique Id from Vantiv: ' . esc_html($transactionId));
-											$order->add_order_note($this->msg['message']);
+											$order->payment_complete( $transactionId );
+											update_post_meta( $order_id, '_transaction_setup_id', $transactionSetupId );
+											$order->add_order_note( 'Vantiv payment successful<br/>Unnique Id from Vantiv: ' . esc_html( $transactionId ) );
+											$order->add_order_note( $this->msg['message'] );
 											$woocommerce->cart->empty_cart();
 										}
-									} else if ($status == "pending") {
+									} else if ( $status == "pending" ) {
 										$this->msg['message'] = "Thank you for shopping with us. Right now your payment staus is pending, We will keep you posted regarding the status of your order through e-mail";
 										$this->msg['class'] = 'woocommerce_message woocommerce_message_info';
-										$order->add_order_note('Vantiv payment status is pending<br/>Unnique Id from Vantiv: ' . esc_html($transactionId));
-										$order->add_order_note($this->msg['message']);
-										$order->update_status('on-hold');
-										update_post_meta($order_id, '_transaction_setup_id', $transactionSetupId);
+										$order->add_order_note( 'Vantiv payment status is pending<br/>Unnique Id from Vantiv: ' . esc_html( $transactionId ) );
+										$order->add_order_note( $this->msg['message'] );
+										$order->update_status( 'on-hold' );
+										update_post_meta( $order_id, '_transaction_setup_id', $transactionSetupId );
 										$woocommerce->cart->empty_cart();
 									} else {
 										$this->msg['class'] = 'woocommerce_error';
 										$this->msg['message'] = "Thank you for shopping with us. However, the transaction has been declined.";
-										$order->add_order_note('Transaction Declined: ' . esc_html($transactionResponseMessage));
-										update_post_meta($order_id, '_transaction_setup_id', $transactionSetupId);
+										$order->add_order_note( 'Transaction Declined: ' . esc_html( $transactionResponseMessage ) );
+										update_post_meta( $order_id, '_transaction_setup_id', $transactionSetupId );
 										//Here you need to put in the routines for a failed
 										//transaction such as sending an email to customer
 										//setting database status etc etc
@@ -477,32 +465,32 @@ if ( ! defined('ABSPATH') ) {
 									//Here you need to simply ignore this and dont need
 									//to perform any operation in this condition
 								}
-								if ($transauthorised == false) {
-									$order->update_status('failed');
-									$order->add_order_note('Failed');
-									$order->add_order_note($this->msg['message']);
+								if ( $transauthorised == false ) {
+									$order->update_status( 'failed' );
+									$order->add_order_note( 'Failed' );
+									$order->add_order_note( $this->msg['message'] );
 								}
 								
-								$redirect_url = add_query_arg('order', $order->get_id(), add_query_arg('key', $order->order_key, home_url('/checkout/order-received/' . $order->get_id())));
-								wp_redirect($redirect_url);
+								$redirect_url = add_query_arg( 'order', $order->get_id(), add_query_arg( 'key', $order->order_key, home_url( '/checkout/order-received/' . $order->get_id() ) ) );
+								wp_redirect( $redirect_url );
 							}
-						} catch (Exception $e) {
+						} catch ( Exception $e ) {
 							// $errorOccurred = true;
 							$this->msg['class'] = 'woocommerce-error';
 							$this->msg['message'] = 'Error';
-							wp_die('Payment Request Failure');
+							wp_die( 'Payment Request Failure' );
 						}
 					}
 				}
 			}
 			
-			public function showMessage($content)
+			public function showMessage( $content )
 			{
 				return '<div class="box ' . $this->msg['class'] . '-box">' . $this->msg['message'] . '</div>' . $content;
 			}
 			
 			// get all pages
-			public function get_pages($title = false, $indent = true)
+			public function get_pages( $title = false, $indent = true )
 			{
 				$wp_pages = get_pages('sort_column=menu_order');
 				$page_list = array();
@@ -530,7 +518,7 @@ if ( ! defined('ABSPATH') ) {
 			 * @param WC_Order $order Order object.
 			 * @return boolean
 			 */
-			public function can_refund_order($order)
+			public function can_refund_order( $order )
 			{
 				$config = $this->getConfig();
 				$has_api_creds = $config['AccountID'] && $config['AccountToken'] && $config['AcceptorID'];
@@ -563,31 +551,24 @@ if ( ! defined('ABSPATH') ) {
 			 * @param string $reason Refund reason.
 			 * @return boolean|WP
 			 */
-			public function process_refund($order_id, $amount = null, $reason = '') {
+			public function process_refund( $order_id, $amount = null, $reason = '' ) {
 				$order = wc_get_order($order_id);
 					
 				if (!$this->can_refund_order($order)) {
 					return new WP_Error('error', __('Refund failed.', 'woocommerce'));
 				}
+
 				$config = $this->getConfig();
 				$initialize = new CnpOnlineRequest();
 				$result = $initialize->refund_transaction($order, $amount, $reason, $config);
 
                 $responseMessage = XmlParser::getNode( $result, 'ExpressResponseMessage' );
-//				var_dump($order_id);
-//				var_dump($responseMessage);
-//				var_dump($result);
-//				die;
-//				if (is_wp_error($result)) {
-//
-//					return new WP_Error('error', $result->get_error_message());
-//				}
-                if ($responseMessage == 'Approved' || $responseMessage == 'Approve' || $responseMessage == 'Duplicate') {
-                    $order->update_meta_data( '_vantiv_refund_id', 'TransactionID' );
-                    $order->update_meta_data( '_vantiv_refund_id', 'TransactionID' );
+
+                if ( $responseMessage == 'Approved' ) {
+                    update_post_meta( $order_id, '_vantiv_refund_id', XmlParser::getNode( $result, 'TransactionID' ) );
                     $order->add_order_note(
                     // translators: 1: Refund amount, 2: Refund ID
-                        sprintf(__('Refunded %1$s - Refund ID: %2$s', 'woocommerce'), '1.00', '123') // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+                        sprintf( __( 'Refunded %1$s - Refund ID: %2$s', 'woocommerce' ), '1.00', '123' ) // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
                     );
                     return true;
                 } else{
@@ -595,50 +576,23 @@ if ( ! defined('ABSPATH') ) {
                 }
 
 			}//end process_refund()
-				
-				/**
-				 * Capture payment when the order is changed from on-hold to complete or processing
-				 *
-				 * @param integer $order_id Order ID.
-				 */
-//				public function capture_payment($order_id)
-//				{
-//					$order = wc_get_order($order_id);
-//
-//					if ('paypal' === $order->get_payment_method() && 'pending' === $order->get_meta('_paypal_status', true) && $order->get_transaction_id()) {
-//						$this->init_api();
-//						$result = WC_Gateway_Paypal_API_Handler::do_capture($order);
-//
-//						if (is_wp_error($result)) {
-//							$this->log('Capture Failed: ' . $result->get_error_message(), 'error');
-//							// translators: %s: Paypal gateway error message
-//							$order->add_order_note(sprintf(__('Payment could not be captured: %s', 'woocommerce'), $result->get_error_message()));
-//							return;
-//						}
-//
-//						$this->log('Capture Result: ' . wc_print_r($result, true));
-//
-//						// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
-//						if (!empty($result->PAYMENTSTATUS)) {
-//							switch ($result->PAYMENTSTATUS) {
-//								case 'Completed':
-//									// translators: 1: Amount, 2: Authorization ID, 3: Transaction ID
-//									$order->add_order_note(sprintf(__('Payment of %1$s was captured - Auth ID: %2$s, Transaction ID: %3$s', 'woocommerce'), $result->AMT, $result->AUTHORIZATIONID, $result->TRANSACTIONID));
-//									update_post_meta($order->get_id(), '_paypal_status', $result->PAYMENTSTATUS);
-//									update_post_meta($order->get_id(), '_transaction_id', $result->TRANSACTIONID);
-//									break;
-//
-//								default:
-//									// translators: 1: Authorization ID, 2: Payment status
-//									$order->add_order_note(sprintf(__('Payment could not be captured - Auth ID: %1$s, Status: %2$s', 'woocommerce'), $result->AUTHORIZATIONID, $result->PAYMENTSTATUS));
-//									break;
-//							}
-//						}
-//
-//						// phpcs:enable
-//					}//end if
-//
-//				}//end capture_payment()
+
+            /**
+             * Capture payment when the order is changed from on-hold to complete or processing
+             *
+             * @param integer $order_id Order ID.
+             */
+            public function capture_payment( $order_id ) {
+                $order = wc_get_order($order_id);
+
+                if ( 'vantiv' === $order->get_payment_method() && 'pending' === $order->has_status() && $order->get_transaction_id() ) {
+
+                    echo $this->generate_form( $order_id );
+
+                }//end if
+
+            }//end capture_payment()
+
 			/**
 			 * Cancel pre-auth on refund/cancellation.
 			 *
@@ -646,83 +600,17 @@ if ( ! defined('ABSPATH') ) {
 			 * @version 4.2.2
 			 * @param  int $order_id
 			 */
-//			public function cancel_payment( $order_id ) {
-//				$order = wc_get_order( $order_id );
-//
-//				if ( 'vantiv' === $order->get_payment_method() ) {
-//					$captured = 'yes';
-//					if ( 'no' === $captured ) {
-//						$this->process_refund( $order_id );
-//					}
-//
-//					// This hook fires when admin manually changes order status to cancel.
-////					do_action( 'woocommerce_stripe_process_manual_cancel', $order );
-//				}
-//			}
-			
-			/**
-			 * Process webhook refund.
-			 *
-			 * @since 4.0.0
-			 * @version 4.0.0
-			 * @param object $notification
-			 */
-//			public function process_webhook_refund( $notification ) {
-//				$order = WC_Stripe_Helper::get_order_by_charge_id( $notification->data->object->id );
-//
-//				if ( ! $order ) {
-//					WC_Stripe_Logger::log( 'Could not find order via charge ID: ' . $notification->data->object->id );
-//					return;
-//				}
-//
-//				$order_id = $order->get_id();
-//
-//				if ( 'stripe' === $order->get_payment_method() ) {
-//					$charge    = $order->get_transaction_id();
-//					$captured  = $order->get_meta( '_stripe_charge_captured', true );
-//					$refund_id = $order->get_meta( '_stripe_refund_id', true );
-//
-//					// If the refund ID matches, don't continue to prevent double refunding.
-//					if ( $notification->data->object->refunds->data[0]->id === $refund_id ) {
-//						return;
-//					}
-//
-//					// Only refund captured charge.
-//					if ( $charge ) {
-//						$reason = ( isset( $captured ) && 'yes' === $captured ) ? __( 'Refunded via Stripe Dashboard', 'woocommerce-gateway-stripe' ) : __( 'Pre-Authorization Released via Stripe Dashboard', 'woocommerce-gateway-stripe' );
-//
-//						// Create the refund.
-//						$refund = wc_create_refund(
-//							array(
-//								'order_id' => $order_id,
-//								'amount'   => $this->get_refund_amount( $notification ),
-//								'reason'   => $reason,
-//							)
-//						);
-//
-//						if ( is_wp_error( $refund ) ) {
-//							WC_Stripe_Logger::log( $refund->get_error_message() );
-//						}
-//
-//						$order->update_meta_data( '_stripe_refund_id', $notification->data->object->refunds->data[0]->id );
-//
-//						$amount = wc_price( $notification->data->object->refunds->data[0]->amount / 100 );
-//
-//						if ( in_array( strtolower( $order->get_currency() ), WC_Stripe_Helper::no_decimal_currencies() ) ) {
-//							$amount = wc_price( $notification->data->object->refunds->data[0]->amount );
-//						}
-//
-//						if ( isset( $notification->data->object->refunds->data[0]->balance_transaction ) ) {
-//							$this->update_fees( $order, $notification->data->object->refunds->data[0]->balance_transaction );
-//						}
-//
-//						/* translators: 1) dollar amount 2) transaction id 3) refund message */
-//						$refund_message = ( isset( $captured ) && 'yes' === $captured ) ? sprintf( __( 'Refunded %1$s - Refund ID: %2$s - %3$s', 'woocommerce-gateway-stripe' ), $amount, $notification->data->object->refunds->data[0]->id, $reason ) : __( 'Pre-Authorization Released via Stripe Dashboard', 'woocommerce-gateway-stripe' );
-//
-//						$order->add_order_note( $refund_message );
-//					}
-//				}
-//			}
+			public function cancel_payment( $order_id ) {
+				$order = wc_get_order( $order_id );
+
+				if ( 'vantiv' === $order->get_payment_method() ) {
+					$captured = 'yes';
+					if ( 'no' === $captured ) {
+						$this->process_refund( $order_id );
+					}
+				}
+			}
+
 			
 		}
 			
