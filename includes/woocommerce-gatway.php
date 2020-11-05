@@ -513,20 +513,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 					return new WP_Error( 'error', __( 'Refund failed.', 'woocommerce' ) );
 				}
 
-				$config = $this->getConfig();
-				$initialize = new CnpOnlineRequest();
-				$result = $initialize->refund_transaction( $order, $amount, $reason, $config );
+				$config          = $this->getConfig();
+				$initialize      = new CnpOnlineRequest();
+				$result          = $initialize->refund_transaction( $order, $amount, $reason, $config );
                 $responseMessage = XmlParser::getNode( $result, 'ExpressResponseMessage' );
-                $refundId = XmlParser::getNode( $result, 'TransactionID' );
+                $refundId        = XmlParser::getNode( $result, 'TransactionID' );
                 
                 if ( $responseMessage == 'Approved' ) {
                     update_post_meta( $order_id, '_vantiv_refund_id', XmlParser::getNode( $result, 'TransactionID' ) );
                     $order->add_order_note(
                     // translators: 1: Refund amount, 2: Refund ID
-                        sprintf( __( 'Refunded %1$s - Refund ID: %2$s', 'woocommerce' ), '1.00', $refundId ) // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+                        sprintf( __( 'Refunded %1$s - Refund ID: %2$s', 'woocommerce' ), $amount, $refundId ) // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
                     );
                     return true;
-                } else{
+                } else {
                     return false;
                 }
 

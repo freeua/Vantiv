@@ -30,7 +30,6 @@ class Obj2xml
     {
 		$config= Obj2xml::getConfig($hash_config, $type);
 		$xml = simplexml_load_string("<$rootNodeName />");
-//		$xml->addAttribute('version',CURRENT_XML_VERSION);
 		$xml->addAttribute('xmlns:xmlns','https://transaction.elementexpress.com');// does not show up on browser docs
 		$credentials = $xml->addChild('Credentials');
 		$credentials->addChild('AccountID',$config["AccountID"]);
@@ -51,11 +50,8 @@ class Obj2xml
 		$transactionSetup->addChild('CompanyName',$config["CompanyName"]);
 		$transactionSetup->addChild('AutoReturn',$config["AutoReturn"]);
 		$transactionSetup->addChild('WelcomeMessage',$config["WelcomeMessage"]);
-//        Obj2xml::iterateChildren($data["ReturnURL"],$transactionSetup);
 		$transactionSetup->addChild('ReturnURL',$data['ReturnURL']);
-		$transactionSetup->addChild('OrderDetails','4761739001020076');
-//		$transactionSetup->addChild('OrderDetails',$data['Transaction']['ReferenceNumber']);
-//		$transactionSetup->addChild('ReturnURL',$data["ReturnURL"]);
+//		$transactionSetup->addChild('OrderDetails','4761739001020076');
 
 		$address = $xml->addChild('Address');
 		$address->addChild('AddressEditAllowed',$config["AddressEditAllowed"]);
@@ -72,13 +68,10 @@ class Obj2xml
 		$terminal->addChild('CVVPresenceCode',$config["CVVPresenceCode"]);
 
 		$transaction = $xml->addChild('Transaction');
-//		Obj2xml::iterateChildren($data['Transaction'],$transaction);
 		$transaction->addChild('MarketCode', $config["MarketCode"]);
 		$transaction->addChild('TransactionAmount', $data['Transaction']['TransactionAmount']);
 		$transaction->addChild('ReferenceNumber', $data['Transaction']['ReferenceNumber']);
 		$transaction->addChild('DuplicateCheckDisableFlag', $config["DuplicateCheckDisableFlag"]);
-//        echo $data["ReturnURL"];
-        var_dump($xml->asXML());
 
 		return $xml->asXML();
     }
@@ -87,7 +80,6 @@ class Obj2xml
 	{
 		$config= Obj2xml::getConfig($hash_config, $type);
 		$xml = simplexml_load_string("<$rootNodeName />");
-//		$xml->addAttribute('version',CURRENT_XML_VERSION);
 		$xml->addAttribute('xmlns:xmlns','https://transaction.elementexpress.com');// does not show up on browser docs
 		$credentials = $xml->addChild('Credentials');
 		$credentials->addChild('AccountID',$config["AccountID"]);
@@ -113,9 +105,7 @@ class Obj2xml
 		$transaction->addChild('TransactionAmount', $amount);
 		$transaction->addChild('TransactionID', $data->get_transaction_id());
 		$transaction->addChild('MarketCode', $config["MarketCode"]);
-//        echo $data["ReturnURL"];
-//        var_dump($xml->asXML());
-		
+
 		return $xml->asXML();
 	}
 
