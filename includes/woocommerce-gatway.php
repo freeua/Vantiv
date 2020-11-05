@@ -518,7 +518,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 				$result          = $initialize->refund_transaction( $order, $amount, $reason, $config );
                 $responseMessage = XmlParser::getNode( $result, 'ExpressResponseMessage' );
                 $refundId        = XmlParser::getNode( $result, 'TransactionID' );
-                
                 if ( $responseMessage == 'Approved' ) {
                     update_post_meta( $order_id, '_vantiv_refund_id', XmlParser::getNode( $result, 'TransactionID' ) );
                     $order->add_order_note(
