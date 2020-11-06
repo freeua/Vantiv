@@ -248,25 +248,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 					$line['ApplicationID'] = $vantivApplicationID;
 					$line['ApplicationVersion'] = $vantivApplicationVersion;
 					$line['ApplicationName'] = $vantivApplicationName;
-					$line['TerminalID'] = $vantivTerminalID;
-					$line['TerminalCapabilityCode'] = $vantivTerminalCapabilityCode;
-					$line['TerminalEnvironmentCode'] = $vantivTerminalEnvironmentCode;
-					$line['CardholderPresentCode'] = $vantivCardholderPresentCode;
-					$line['CardInputCode'] = $vantivCardInputCode;
-					$line['CardPresentCode'] = $vantivCardPresentCode;
-					$line['MotoECICode'] = $vantivMotoECICode;
-					$line['CVVPresenceCode'] = $vantivCVVPresenceCode;
+					$line['TerminalID'] = ( !empty( $vantivTerminalID ) ) ? $vantivTerminalID : 01;
+					$line['TerminalCapabilityCode'] = ( !empty( $vantivTerminalCapabilityCode ) ) ? $vantivTerminalCapabilityCode : 3;
+					$line['TerminalEnvironmentCode'] = ( !empty( $vantivTerminalEnvironmentCode ) ) ? $vantivTerminalEnvironmentCode : 6;
+					$line['CardholderPresentCode'] = ( !empty( $vantivCardholderPresentCode ) ) ? $vantivCardholderPresentCode : 7;
+					$line['CardInputCode'] = ( !empty( $vantivCardInputCode ) ) ? $vantivCardInputCode : 4;
+					$line['CardPresentCode'] = ( !empty( $vantivCardPresentCode ) ) ? $vantivCardPresentCode : 2;
+					$line['MotoECICode'] = ( !empty( $vantivMotoECICode ) ) ? $vantivMotoECICode : 1;
+					$line['CVVPresenceCode'] = ( !empty( $vantivCVVPresenceCode ) ) ? $vantivCVVPresenceCode : 2;
 					
-					$line['url'] = 'https://certtransaction.hostedpayments.com/';
+					$line['URL'] = 'https://certtransaction.elementexpress.com/';
 					
 					$line['TransactionSetupMethod'] = '1';
 					$line['DeviceInputCode'] = '0';
 					$line['Device'] = '0';
 					$line['Embedded'] = '0';
 					$line['CVVRequired'] = '1';
-					$line['CompanyName'] = $vantivCompanyName;
+					$line['CompanyName'] = ( !empty( $vantivCompanyName ) ) ? $vantivCompanyName : 'site';
 					$line['AutoReturn'] = '1';
-					$line['WelcomeMessage'] = $vantivWelcomeMessage;
+					$line['WelcomeMessage'] = ( !empty( $vantivWelcomeMessage ) ) ? "'" . $vantivWelcomeMessage . "'" : "'Thank you for your order'";
 					$line['AddressEditAllowed'] = '0';
 					$line['MarketCode'] = '3';
 					$line['DuplicateCheckDisableFlag'] = '1';
@@ -341,7 +341,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			 **/
 			function receipt_page( $order )
 			{
-				echo '<p>' . __( 'Thank you for your order, please click the button below to pay with Vantiv.', 'vantiv' ) . '</p>';
+				echo '<p>' . __('Thank you for your order, please click the button below to pay with Vantiv.', 'vantiv') . '</p>';
 				echo $this->generate_form ( $order );
 			}
 			
@@ -373,8 +373,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 			{
 				$initialize = new CnpOnlineRequest();
 				$saleResponse = $initialize->saleRequest( $params );
-				if ( XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ) != 'Success' )
-					throw new \Exception( 'Hosted Payment Transaction does not get the right response' );
+				
+				if ( XmlParser::getNode($saleResponse, 'ExpressResponseMessage' ) != 'Success')
+					throw new \Exception('Hosted Payment Transaction does not get the right response');
 				
 				// 1 or 4 means the transaction was a success
 				if ( XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ) == 'Success' ) {
