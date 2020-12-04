@@ -32,45 +32,46 @@ class Obj2xml
 		$xml = simplexml_load_string("<$rootNodeName />");
 		$xml->addAttribute('xmlns:xmlns','https://transaction.elementexpress.com');// does not show up on browser docs
 		$credentials = $xml->addChild('Credentials');
-		$credentials->addChild('AccountID',$config["AccountID"]);
-		$credentials->addChild('AccountToken',$config["AccountToken"]);
-		$credentials->addChild('AcceptorID',$config["AcceptorID"]);
+		$credentials->addChild('AccountID', $config["AccountID"]);
+		$credentials->addChild('AccountToken', $config["AccountToken"]);
+		$credentials->addChild('AcceptorID', $config["AcceptorID"]);
 
 		$application = $xml->addChild('Application');
-		$application->addChild('ApplicationID',$config["ApplicationID"]);
-		$application->addChild('ApplicationVersion',$config["ApplicationVersion"]);
-		$application->addChild('ApplicationName',$config["ApplicationName"]);
+		$application->addChild('ApplicationID', $config["ApplicationID"]);
+		$application->addChild('ApplicationVersion', $config["ApplicationVersion"]);
+		$application->addChild('ApplicationName', $config["ApplicationName"]);
 
 		$transactionSetup = $xml->addChild('TransactionSetup');
-		$transactionSetup->addChild('TransactionSetupMethod',$config["TransactionSetupMethod"]);
-		$transactionSetup->addChild('DeviceInputCode',$config["DeviceInputCode"]);
-		$transactionSetup->addChild('Device',$config["Device"]);
-		$transactionSetup->addChild('Embedded',$config["Embedded"]);
-		$transactionSetup->addChild('CVVRequired',$config["CVVRequired"]);
-		$transactionSetup->addChild('CompanyName',$config["CompanyName"]);
-		$transactionSetup->addChild('AutoReturn',$config["AutoReturn"]);
-		$transactionSetup->addChild('WelcomeMessage',$config["WelcomeMessage"]);
-		$transactionSetup->addChild('ReturnURL',$data['ReturnURL']);
+		$transactionSetup->addChild('TransactionSetupMethod', $config["TransactionSetupMethod"]);
+		$transactionSetup->addChild('DeviceInputCode', $config["DeviceInputCode"]);
+		$transactionSetup->addChild('Device', $config["Device"]);
+		$transactionSetup->addChild('Embedded', $config["Embedded"]);
+		$transactionSetup->addChild('CVVRequired', $config["CVVRequired"]);
+		$transactionSetup->addChild('CompanyName', $config["CompanyName"]);
+		$transactionSetup->addChild('AutoReturn', $config["AutoReturn"]);
+		$transactionSetup->addChild('WelcomeMessage', $config["WelcomeMessage"]);
+		$transactionSetup->addChild('ReturnURL', $data['ReturnURL']);
 //		$transactionSetup->addChild('OrderDetails','4761739001020076');
 
 		$address = $xml->addChild('Address');
-		$address->addChild('AddressEditAllowed',$config["AddressEditAllowed"]);
+		$address->addChild('AddressEditAllowed', $config["AddressEditAllowed"]);
 		Obj2xml::iterateChildren($data['Address'], $address);
 
 		$terminal = $xml->addChild('Terminal');
-		$terminal->addChild('TerminalID',$config["TerminalID"]);
-		$terminal->addChild('CardholderPresentCode',$config["CardholderPresentCode"]);
-		$terminal->addChild('CardInputCode',$config["CardInputCode"]);
-		$terminal->addChild('TerminalCapabilityCode',$config["TerminalCapabilityCode"]);
-		$terminal->addChild('TerminalEnvironmentCode',$config["TerminalEnvironmentCode"]);
-		$terminal->addChild('CardPresentCode',$config["CardPresentCode"]);
-		$terminal->addChild('MotoECICode',$config["MotoECICode"]);
-		$terminal->addChild('CVVPresenceCode',$config["CVVPresenceCode"]);
+		$terminal->addChild('TerminalID', $config["TerminalID"]);
+		$terminal->addChild('CardholderPresentCode', $config["CardholderPresentCode"]);
+		$terminal->addChild('CardInputCode', $config["CardInputCode"]);
+		$terminal->addChild('TerminalCapabilityCode', $config["TerminalCapabilityCode"]);
+		$terminal->addChild('TerminalEnvironmentCode', $config["TerminalEnvironmentCode"]);
+		$terminal->addChild('CardPresentCode', $config["CardPresentCode"]);
+		$terminal->addChild('MotoECICode', $config["MotoECICode"]);
+		$terminal->addChild('CVVPresenceCode', $config["CVVPresenceCode"]);
 
 		$transaction = $xml->addChild('Transaction');
 		$transaction->addChild('MarketCode', $config["MarketCode"]);
 		$transaction->addChild('TransactionAmount', $data['Transaction']['TransactionAmount']);
 		$transaction->addChild('ReferenceNumber', $data['Transaction']['ReferenceNumber']);
+		$transaction->addChild('TicketNumber', $data['Transaction']['ReferenceNumber']);
 		$transaction->addChild('DuplicateCheckDisableFlag', $config["DuplicateCheckDisableFlag"]);
 
 		return $xml->asXML();
@@ -82,28 +83,30 @@ class Obj2xml
 		$xml = simplexml_load_string("<$rootNodeName />");
 		$xml->addAttribute('xmlns:xmlns','https://transaction.elementexpress.com');// does not show up on browser docs
 		$credentials = $xml->addChild('Credentials');
-		$credentials->addChild('AccountID',$config["AccountID"]);
-		$credentials->addChild('AccountToken',$config["AccountToken"]);
-		$credentials->addChild('AcceptorID',$config["AcceptorID"]);
+		$credentials->addChild('AccountID', $config["AccountID"]);
+		$credentials->addChild('AccountToken', $config["AccountToken"]);
+		$credentials->addChild('AcceptorID', $config["AcceptorID"]);
 		
 		$application = $xml->addChild('Application');
-		$application->addChild('ApplicationID',$config["ApplicationID"]);
-		$application->addChild('ApplicationVersion',$config["ApplicationVersion"]);
-		$application->addChild('ApplicationName',$config["ApplicationName"]);
+		$application->addChild('ApplicationID', $config["ApplicationID"]);
+		$application->addChild('ApplicationVersion', $config["ApplicationVersion"]);
+		$application->addChild('ApplicationName', $config["ApplicationName"]);
 		
 		$terminal = $xml->addChild('Terminal');
-		$terminal->addChild('TerminalID',$config["TerminalID"]);
-		$terminal->addChild('CardholderPresentCode',$config["CardholderPresentCode"]);
-		$terminal->addChild('CardInputCode',$config["CardInputCode"]);
-		$terminal->addChild('TerminalCapabilityCode',$config["TerminalCapabilityCode"]);
-		$terminal->addChild('TerminalEnvironmentCode',$config["TerminalEnvironmentCode"]);
-		$terminal->addChild('CardPresentCode',$config["CardPresentCode"]);
-		$terminal->addChild('MotoECICode',$config["MotoECICode"]);
-		$terminal->addChild('CVVPresenceCode',$config["CVVPresenceCode"]);
+		$terminal->addChild('TerminalID', $config["TerminalID"]);
+		$terminal->addChild('CardholderPresentCode', $config["CardholderPresentCode"]);
+		$terminal->addChild('CardInputCode', $config["CardInputCode"]);
+		$terminal->addChild('TerminalCapabilityCode', $config["TerminalCapabilityCode"]);
+		$terminal->addChild('TerminalEnvironmentCode', $config["TerminalEnvironmentCode"]);
+		$terminal->addChild('CardPresentCode', $config["CardPresentCode"]);
+		$terminal->addChild('MotoECICode', $config["MotoECICode"]);
+		$terminal->addChild('CVVPresenceCode', $config["CVVPresenceCode"]);
 		
 		$transaction = $xml->addChild('Transaction');
 		$transaction->addChild('TransactionAmount', $amount);
 		$transaction->addChild('TransactionID', $data->get_transaction_id());
+		$transaction->addChild('ReferenceNumber', $data->get_id());
+		$transaction->addChild('TicketNumber', $data->get_id());
 		$transaction->addChild('MarketCode', $config["MarketCode"]);
 
 		return $xml->asXML();

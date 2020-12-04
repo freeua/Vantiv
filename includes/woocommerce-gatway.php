@@ -242,33 +242,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 							$sandbox = $this->get_field_value( $key, $field, $post_data );
 						}
 					}
-					$line['AccountID'] = $vantivAccountId;
-					$line['AccountToken'] = $vantivPublicKeyID;
-					$line['AcceptorID'] = $vantivAcceptorID;
-					$line['ApplicationID'] = $vantivApplicationID;
-					$line['ApplicationVersion'] = $vantivApplicationVersion;
-					$line['ApplicationName'] = $vantivApplicationName;
-					$line['TerminalID'] = ( !empty( $vantivTerminalID ) ) ? $vantivTerminalID : 01;
-					$line['TerminalCapabilityCode'] = ( !empty( $vantivTerminalCapabilityCode ) ) ? $vantivTerminalCapabilityCode : 3;
-					$line['TerminalEnvironmentCode'] = ( !empty( $vantivTerminalEnvironmentCode ) ) ? $vantivTerminalEnvironmentCode : 6;
-					$line['CardholderPresentCode'] = ( !empty( $vantivCardholderPresentCode ) ) ? $vantivCardholderPresentCode : 7;
-					$line['CardInputCode'] = ( !empty( $vantivCardInputCode ) ) ? $vantivCardInputCode : 4;
-					$line['CardPresentCode'] = ( !empty( $vantivCardPresentCode ) ) ? $vantivCardPresentCode : 2;
-					$line['MotoECICode'] = ( !empty( $vantivMotoECICode ) ) ? $vantivMotoECICode : 1;
-					$line['CVVPresenceCode'] = ( !empty( $vantivCVVPresenceCode ) ) ? $vantivCVVPresenceCode : 2;
-					
-					$line['URL'] = 'https://certtransaction.elementexpress.com/';
-					
-					$line['TransactionSetupMethod'] = '1';
-					$line['DeviceInputCode'] = '0';
-					$line['Device'] = '0';
-					$line['Embedded'] = '0';
-					$line['CVVRequired'] = '1';
-					$line['CompanyName'] = ( !empty( $vantivCompanyName ) ) ? $vantivCompanyName : 'site';
-					$line['AutoReturn'] = '1';
-					$line['WelcomeMessage'] = ( !empty( $vantivWelcomeMessage ) ) ? "'" . $vantivWelcomeMessage . "'" : "'Thank you for your order'";
-					$line['AddressEditAllowed'] = '0';
-					$line['MarketCode'] = '3';
+                    $line['AccountID']               = !empty( $vantivAccountId ) ? $vantivAccountId :'';
+                    $line['AccountToken']            = !empty( $vantivPublicKeyID ) ? $vantivPublicKeyID :'';
+                    $line['AcceptorID']              = !empty( $vantivAcceptorID ) ? $vantivAcceptorID :'';
+                    $line['ApplicationID']           = !empty( $vantivApplicationID ) ? $vantivApplicationID :'';
+                    $line['ApplicationVersion']      = !empty( $vantivApplicationVersion ) ? $vantivApplicationVersion : '1.1.1';
+                    $line['ApplicationName']         = !empty( $vantivApplicationName ) ? $vantivApplicationName : 'XML';
+                    $line['TerminalID']              = !empty( $vantivTerminalID ) ? $vantivTerminalID : '01';
+                    $line['TerminalCapabilityCode']  = !empty( $vantivTerminalCapabilityCode ) ? $vantivTerminalCapabilityCode : '5';
+                    $line['TerminalEnvironmentCode'] = !empty( $vantivTerminalEnvironmentCode ) ? $vantivTerminalEnvironmentCode : '6';
+                    $line['CardholderPresentCode']   = !empty( $vantivCardholderPresentCode ) ? $vantivCardholderPresentCode : '7';
+                    $line['CardInputCode']           = !empty( $vantivCardInputCode ) ? $vantivCardInputCode : '4';
+                    $line['CardPresentCode']         = !empty( $vantivCardPresentCode ) ? $vantivCardPresentCode : '3';
+                    $line['MotoECICode']             = !empty( $vantivMotoECICode ) ? $vantivMotoECICode : '7';
+                    $line['CVVPresenceCode']         = !empty( $vantivCVVPresenceCode ) ? $vantivCVVPresenceCode : '2';
+                    if ( !empty( $sandbox ) && $sandbox == 'yes' ) {
+                        $line['URL'] = 'https://certtransaction.elementexpress.com/';
+                    } else {
+                        $line['URL'] = 'https://certtransaction.elementexpress.com/';
+                    }
+
+                    $line['TransactionSetupMethod']    = '1';
+                    $line['DeviceInputCode']           = '0';
+                    $line['Device']                    = '0';
+                    $line['Embedded']                  = '0';
+                    $line['CVVRequired']               = '1';
+                    $line['CompanyName']               = !empty( $vantivCompanyName ) ? $vantivCompanyName : '';
+                    $line['AutoReturn']                = '1';
+                    $line['WelcomeMessage']            = !empty( $vantivWelcomeMessage ) ? $vantivWelcomeMessage : 'Thank you for your order!';
+					$line['AddressEditAllowed']        = '0';
+					$line['MarketCode']                = '3';
 					$line['DuplicateCheckDisableFlag'] = '1';
 					$this->writeConfigPaymentSettings( $line, $handle );
 				}
@@ -341,7 +344,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 			 **/
 			function receipt_page( $order )
 			{
-				echo '<p>' . __('Thank you for your order, please click the button below to pay with Vantiv.', 'vantiv') . '</p>';
 				echo $this->generate_form ( $order );
 			}
 			
@@ -381,7 +383,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				if ( XmlParser::getNode( $saleResponse, 'ExpressResponseMessage' ) == 'Success' ) {
 					
 					// Redirect to hostedpayments page
-					$redirect_url = 'https://certtransaction.hostedpayments.com/?TransactionSetupID=' . XmlParser::getNode( $saleResponse, 'TransactionSetupID' );
+					$redirect_url = $this->liveurl . '?TransactionSetupID=' . XmlParser::getNode( $saleResponse, 'TransactionSetupID' );
 					wp_redirect( $redirect_url );
 				} else {
 					//transiction fail
@@ -401,7 +403,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 						$first_part = substr( $url, $start + strlen( $template_name ) );
 						$order_id = substr( $first_part, 0, strpos( $first_part, '?' ) );
 					}
-					if ($order_id != '') {
+					if ( $order_id != '' ) {
 						try {
 							$order = new WC_Order( $order_id );
 							$responseMessage = ( isset( $_GET['ExpressResponseMessage'] ) ) ? sanitize_text_field( $_GET['ExpressResponseMessage'] ) : '';
@@ -413,11 +415,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 							if ( $order_status !== 'completed' ) {
 								$status = strtolower( $status );
 								if ( $status == 'complete' ) {
-									$this->msg['message'] = "Thank you for shopping with us. Right now your payment staus is pending, We will keep you posted regarding the status of your order through e-mail";
+									$this->msg['message'] = "Thank you for shopping with us. Right now your payment status is pending, We will keep you posted regarding the status of your order through e-mail";
 									$this->msg['class'] = 'woocommerce_message woocommerce_message_info';
 									$order->payment_complete( $transactionId );
 									update_post_meta( $order_id, '_transaction_setup_id', $transactionSetupId );
-									$order->add_order_note( 'Vantiv payment successful<br/>Unnique Id from Vantiv: ' . esc_html( $transactionId ) );
+									$order->add_order_note( 'Vantiv payment successful<br/>Unnique transaction Id from Vantiv: ' . esc_html( $transactionId ) );
 									$order->add_order_note( $this->msg['message'] );
 									$woocommerce->cart->empty_cart();
 									
