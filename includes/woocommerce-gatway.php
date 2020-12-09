@@ -263,6 +263,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     }
 
                     $line['TransactionSetupMethod']    = '1';
+                    $line['TerminalType']              = '2';
                     $line['DeviceInputCode']           = '0';
                     $line['Device']                    = '0';
                     $line['Embedded']                  = '0';

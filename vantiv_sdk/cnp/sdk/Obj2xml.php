@@ -59,6 +59,7 @@ class Obj2xml
 
 		$terminal = $xml->addChild('Terminal');
 		$terminal->addChild('TerminalID', $config["TerminalID"]);
+		$terminal->addChild('TerminalType', $config["TerminalType"]);
 		$terminal->addChild('CardholderPresentCode', $config["CardholderPresentCode"]);
 		$terminal->addChild('CardInputCode', $config["CardInputCode"]);
 		$terminal->addChild('TerminalCapabilityCode', $config["TerminalCapabilityCode"]);
@@ -94,6 +95,7 @@ class Obj2xml
 		
 		$terminal = $xml->addChild('Terminal');
 		$terminal->addChild('TerminalID', $config["TerminalID"]);
+        $terminal->addChild('TerminalType', $config["TerminalType"]);
 		$terminal->addChild('CardholderPresentCode', $config["CardholderPresentCode"]);
 		$terminal->addChild('CardInputCode', $config["CardInputCode"]);
 		$terminal->addChild('TerminalCapabilityCode', $config["TerminalCapabilityCode"]);
