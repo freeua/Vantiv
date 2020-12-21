@@ -103,13 +103,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 					'ApplicationVersion' => array(
 						'title'       => __( 'ApplicationVersion', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Unique application version. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( 'Version of application. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'ApplicationName' => array(
 						'title'       => __( 'ApplicationName', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Unique application name. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( 'Name of application. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'TerminalID' => array(
@@ -121,62 +121,55 @@ if ( ! defined( 'ABSPATH' ) ) {
 					'TerminalCapabilityCode' => array(
 						'title'       => __( 'TerminalCapabilityCode', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Unique terminal capability code. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( 'TerminalCapabilityCode specifies what the capabilities of the Terminal are. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'TerminalEnvironmentCode' => array(
 						'title'       => __( 'TerminalEnvironmentCode', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Unique terminal environment code. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( 'TerminalEnvironmentCode specifies what type of conditions the Terminal is operated in. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'CardholderPresentCode' => array(
 						'title'       => __( 'CardholderPresentCode', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Unique card holder present code. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( 'CardholderPresentCode specifies the location of the cardholder at the time of the transaction. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'CardInputCode' => array(
 						'title'       => __( 'CardInputCode', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Unique card input code. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( ' CardInputCode specifies the means by which the Card Number or Track Data was acquired. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'CardPresentCode' => array(
 						'title'       => __( 'CardPresentCode', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Unique card present code. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( ' CardPresentCode specifies the location of the card at the time of the transaction. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'MotoECICode' => array(
 						'title'       => __( 'MotoECICode', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Unique moto ECI code. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( 'MotoECI Code is used on MOTO and E-Commerce transactions to identify the type of transaction, and the means in which it was obtained. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'CVVPresenceCode' => array(
 						'title'       => __( 'CVVPresenceCode', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Unique CVV presence code. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( 'CVVPresenceCode specifies the status of the CVV code from the consumer card as it pertains to the transaction. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'CompanyName' => array(
 						'title'       => __( 'CompanyName', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Your Company Name. Required', 'gateway-vantiv-woocommerce' ),
+						'description' => __( 'Name of merchant. Required', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 					'WelcomeMessage' => array(
 						'title'       => __( 'WelcomeMessage', 'gateway-vantiv-woocommerce' ),
 						'type'        => 'text',
-						'description' => __( 'Welcome Message after order success. Required', 'gateway-vantiv-woocommerce' ),
-						'desc_tip'    => true,
-					),
-					'sandbox' => array(
-						'title'       => __( 'Sandbox', 'gateway-vantiv-woocommerce' ),
-						'label'       => __( 'Enable', 'gateway-vantiv-woocommerce' ),
-						'type'        => 'checkbox',
-						'description' => __( 'Sandbox mode', 'gateway-vantiv-woocommerce' ),
+						'description' => __( 'Text to display to cardholder. Optional', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
 				);
@@ -238,9 +231,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 						if ( $key == 'WelcomeMessage' ) {
 							$vantivWelcomeMessage = $this->get_field_value( $key, $field, $post_data );
 						}
-						if ( $key == 'sandbox' ) {
-							$sandbox = $this->get_field_value( $key, $field, $post_data );
-						}
 					}
                     $line['AccountID']               = !empty( $vantivAccountId ) ? $vantivAccountId :'';
                     $line['AccountToken']            = !empty( $vantivPublicKeyID ) ? $vantivPublicKeyID :'';
@@ -256,12 +246,8 @@ if ( ! defined( 'ABSPATH' ) ) {
                     $line['CardPresentCode']         = !empty( $vantivCardPresentCode ) ? $vantivCardPresentCode : '3';
                     $line['MotoECICode']             = !empty( $vantivMotoECICode ) ? $vantivMotoECICode : '7';
                     $line['CVVPresenceCode']         = !empty( $vantivCVVPresenceCode ) ? $vantivCVVPresenceCode : '2';
-                    if ( !empty( $sandbox ) && $sandbox == 'yes' ) {
-                        $line['URL'] = 'https://certtransaction.elementexpress.com/';
-                    } else {
-                        $line['URL'] = 'https://certtransaction.elementexpress.com/';
-                    }
 
+                    $line['URL'] = 'https://certtransaction.elementexpress.com/';
                     $line['TransactionSetupMethod']    = '1';
                     $line['TerminalType']              = '2';
                     $line['DeviceInputCode']           = '0';
