@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Gateway for Vantiv on WooCommerce
+ * Plugin Name: Gateway for Vantiv on WC
  * Plugin URI: https://github.com/freeua/gateway-vantiv-woocommerce
  * Description: Take payments on your store using Vantiv.
  * Version: 1.0.0
