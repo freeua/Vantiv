@@ -1,4 +1,4 @@
-=== Gateway for Vantiv on WooCommerce ===
+=== Gateway for Vantiv on WC ===
 Contributors: freeua
 Tags: credit card, vantiv, payment request, woocommerce
 Requires at least: 5.0
