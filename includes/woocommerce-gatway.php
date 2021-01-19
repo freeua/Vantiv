@@ -7,8 +7,8 @@ use cnp\sdk\CnpOnlineRequest;
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-	if ( ! class_exists( 'WC_Gateway_Vantiv' ) ) {
-		class WC_Gateway_Vantiv extends WC_Payment_Gateway
+	if ( ! class_exists( 'GVWC_Gateway_Vantiv' ) ) {
+		class GVWC_Gateway_Vantiv extends WC_Payment_Gateway
 		{
 			public function __construct()
 			{
