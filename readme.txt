@@ -16,8 +16,8 @@ Accept Visa, MasterCard, American Express, Discover, JCB, Diners Club  and more 
 
 = Take Credit card payments easily and directly on your store =
 
-The Vantiv plugin extends WooCommerce allowing you to take payments directly on your store via Vantiv’s API. Plugin uses The Vantiv eCommerce PHP SDK
-[SDK link](https://github.com/Vantiv/cnp-sdk-for-php).
+The Vantiv plugin extends WooCommerce allowing you to take payments directly on your store via Vantiv’s API. Plugin uses The Vantiv Express API
+[Express API link](https://developer.vantiv.com/docs/DOC-1353).
 
 == Installation ==
 
