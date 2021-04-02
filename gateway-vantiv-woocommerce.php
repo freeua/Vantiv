@@ -3,7 +3,7 @@
  * Plugin Name: Gateway for Vantiv on WC
  * Plugin URI: https://github.com/freeua/gateway-vantiv-woocommerce
  * Description: Take payments on your store using Vantiv.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Free UA
  * Author URI: https://freeua.agency/
  */
@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'GVWC_VANTIV_VERSION', '1.0.0' );
+define( 'GVWC_VANTIV_VERSION', '1.0.1' );
 define( 'GVWC_VANTIV_MAIN_FILE', __FILE__ );
 
 

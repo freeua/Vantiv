@@ -77,7 +77,7 @@ function initialize()
         $line['CVVPresenceCode'] = formatConfigValue(STDIN);
         print "Please choose url from the following list (example: 'sandbox') or directly input another URL: \n" .
             "sandbox => 'https://certtransaction.elementexpress.com/' \n" .
-            "transact-express => https://certtransaction.elementexpress.com/ \n" .
+            "transact-express => https://transaction.elementexpress.com/ \n" .
         $url = UrlMapper::getUrl(trim(fgets(STDIN)));
         
         if (is_array($url)){

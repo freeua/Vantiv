@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				$this->testmode           = 'yes' === $this->get_option( 'sandbox' );
 				$this->description        = $this->get_option( 'description' );
 				$this->method_description = 'Vantiv works by adding payment fields on the checkout and then sending the details to Vantiv.';
-				$this->liveurl            = 'https://certtransaction.hostedpayments.com/';
+                $this->liveurl            = ( get_option('woocommerce_vantiv_settings')['sandbox'] == 'yes' ) ? 'https://certtransaction.hostedpayments.com/' : 'https://transaction.hostedpayments.com/';
 				$this->msg['message']     = "";
 				$this->msg['class']       = "";
 				$this->order_button_text  = __( 'Proceed to Vantiv', 'woocommerce' );
@@ -172,6 +172,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 						'description' => __( 'Text to display to cardholder. Optional', 'gateway-vantiv-woocommerce' ),
 						'desc_tip'    => true,
 					),
+                    'sandbox' => array(
+                        'title'       => __( 'Sandbox', 'gateway-vantiv-woocommerce' ),
+                        'type'        => 'checkbox',
+                        'description' => __( 'Place gateway to sandbox mode', 'gateway-vantiv-woocommerce' ),
+                        'desc_tip'    => true,
+                    ),
 				);
 			}
 			
@@ -231,6 +237,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 						if ( $key == 'WelcomeMessage' ) {
 							$vantivWelcomeMessage = $this->get_field_value( $key, $field, $post_data );
 						}
+						if ( $key == 'sandbox' ) {
+							$vantivSandbox = $this->get_field_value( $key, $field, $post_data );
+						}
 					}
                     $line['AccountID']               = !empty( $vantivAccountId ) ? $vantivAccountId :'';
                     $line['AccountToken']            = !empty( $vantivPublicKeyID ) ? $vantivPublicKeyID :'';
@@ -247,7 +256,7 @@ if ( ! defined( 'ABSPATH' ) ) {
                     $line['MotoECICode']             = !empty( $vantivMotoECICode ) ? $vantivMotoECICode : '7';
                     $line['CVVPresenceCode']         = !empty( $vantivCVVPresenceCode ) ? $vantivCVVPresenceCode : '2';
 
-                    $line['URL'] = 'https://certtransaction.elementexpress.com/';
+                    $line['URL']                       = ( $vantivSandbox == 'yes' ) ? 'https://certtransaction.elementexpress.com/' : 'https://transaction.elementexpress.com/';
                     $line['TransactionSetupMethod']    = '1';
                     $line['TerminalType']              = '2';
                     $line['DeviceInputCode']           = '0';
